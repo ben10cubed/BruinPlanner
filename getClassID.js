@@ -44,13 +44,9 @@ export async function getMajors(term = "26W") {
     }
   }
 
+  if (data.length === 0) {
+    throw new Error("No majors found after parsing. Likely entered an invalid term.");
+  }
+
   return data;
 }
-
-// Example usage:
-getMajors("26W")
-  .then((majors) => {
-    console.log(`Found ${majors.length} majors.`);
-    console.log(majors.slice(0, 10)); // print first few
-  })
-  .catch(console.error);
