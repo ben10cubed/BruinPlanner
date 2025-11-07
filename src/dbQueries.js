@@ -18,6 +18,7 @@ export function initDB() {
             enroll TEXT,
             section TEXT,
             status TEXT,
+            avail TEXT,
             waitlist TEXT,
             info TEXT,
             day TEXT,
@@ -36,8 +37,8 @@ export function createSubjectEntry(db, subjectData) {
 
 //Original Xavier function renamed from createEntry to createClassEntry
 export function createClassEntry(db, classData) {
-    db.run(`INSERT INTO classData (enroll, section, status, waitlist, info, day, time, location, units, instructor)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, classData);
+    db.run(`INSERT INTO classData (enroll, section, status, avail, waitlist, info, day, time, location, units, instructor)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, classData);
 }
 
 export function getAllEntries(db) {
