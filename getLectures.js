@@ -59,7 +59,7 @@ function getTokenStr(subjectCode, courseID) {
     lecture_num: optional parameter; if it is entered, then it returns the discussion sections corresponding to that lecture. If not, then it just returns the lectures
 */
 
-async function fetchCourse(subject_code, course_ID, term, lecture_num=null) {
+export async function fetchCourse(subject_code, course_ID, term, lecture_num=null) {
     const url_base = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
 
     const Token = Buffer.from(getTokenStr(subject_code, course_ID), "utf8").toString("base64");
@@ -84,7 +84,7 @@ async function fetchCourse(subject_code, course_ID, term, lecture_num=null) {
         advanced: "y",
         meet_days: "M,T,W,R,F",
         start_time: "8:00 am",
-        end_time: "6:00 pm",
+        end_time: "10:00 pm",
         meet_locations: null,
         meet_units: null,
         instructor: null,
