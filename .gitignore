@@ -140,8 +140,3 @@ vite.config.ts.timestamp-*
 
 
 *.py
-
-.gitignore
-
-package-lock.json
-package.json
