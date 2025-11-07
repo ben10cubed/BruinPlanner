@@ -1,21 +1,29 @@
-const { readFileSync } = require("node:fs");
+import { readFileSync } from "node:fs";
 
-const { getSubjectID } = require("./getSubjectID.js");
-const { getClassData } = require("./getClassData.js");
-const { initDB, createClassEntry, createSubjectEntry, getAllEntries } = require("./dbQueries.js");
+import { getSubjectID } from "./getSubjectID.js";
+import { getClassID } from "./getClassID.js";
+import { getClassData } from "./getClassData.js";
+import { initDB, createClassEntry, createSubjectEntry, getAllEntries }from "./dbQueries.js";
 
 async function main() {
     // Temporarily read from "sampleCourseHTML.txt"
     // When the getHTML function is up in js, pipe that into here instead
 
+    //Scrapes all of subject IDs
     const subjectID = await getSubjectID("26W");
 
+    //For each subject ID, scrape class ID.
+    //After some more testing, appears to work fine.
+    //In case anything break/doesn't work as intended/classes missing, please inform Ben.
+    for (let i = 0; i < subjectID.length; i++) {
+      await getClassID("26W", subjectID[i].value);
+    }
 
-
+    //Work in progress TODO;
     const classHTML = readFileSync('sampleCourseHTML.txt', 'utf8');
     console.log("Class Data Retrieved");
     
-    allClassData = getClassData(classHTML);
+    const allClassData = await getClassData(classHTML);
 
     // Initialize DB and input data
     initDB().then(db => {
@@ -30,10 +38,4 @@ async function main() {
     });
 }
 
-if (require.main === module) {
-  try {
-    main();
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
+main();
