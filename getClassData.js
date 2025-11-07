@@ -1,4 +1,5 @@
-function getClassData(classHTML) {
+//Takes in HTML file that contains class/discussion information and scrapes for desired data.
+export function getClassData(classHTML) {
     const urlBase = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
     const subjectCode = "COM SCI";
     const courseID = "35L";
@@ -41,4 +42,3 @@ function getClassData(classHTML) {
     return allClassData;
 }
 
-module.exports = { getClassData };
