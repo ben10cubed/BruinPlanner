@@ -3,7 +3,7 @@
  * @param {string} term - The UCLA term code (e.g. "26W").
  * @returns {Promise<Array<{label: string, value: string}>>} List of majors/subjects.
  */
-async function getSubjectID(term = "26W") {
+export async function getSubjectID(term = "26W") {
   const timestamp = Date.now();
   const url = `https://sa.ucla.edu/ro/ClassSearch/Public/Search/GetSimpleSearchData?term_cd=${term}&ses_grp_cd=&search_type=subject&_=${timestamp}`;
 
@@ -48,5 +48,3 @@ async function getSubjectID(term = "26W") {
 
   return data;
 }
-
-module.exports = {getSubjectID};
