@@ -1,12 +1,10 @@
-import fetch from "node-fetch";
-
 /**
  * Fetches UCLA course titles for a given subject and term.
  * @param {string} term - Term code (e.g., "26W")
  * @param {string} subjectId - Subject area code (e.g., "SCAND")
  * @returns {Promise<string[]>} List of course titles.
  */
-export async function getClasses(term, subjectId) {
+async function getClasses(term, subjectId) {
   const urlBase = "https://sa.ucla.edu/ro/public/soc/Results/CourseTitlesView?search_by=subject&";
 
   const model = {
@@ -72,3 +70,5 @@ export async function getClasses(term, subjectId) {
 
   return results;
 }
+
+module.exports = { getClasses };

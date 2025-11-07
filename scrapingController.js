@@ -1,11 +1,17 @@
 const { readFileSync } = require("node:fs");
 
+const { getSubjectID } = require("./getSubjectID.js");
 const { getClassData } = require("./getClassData.js");
-const { initDB, createEntry, getAllEntries } = require("./dbQueries.js");
+const { initDB, createClassEntry, createSubjectEntry, getAllEntries } = require("./dbQueries.js");
 
-function main() {
+async function main() {
     // Temporarily read from "sampleCourseHTML.txt"
     // When the getHTML function is up in js, pipe that into here instead
+
+    const subjectID = await getSubjectID("26W");
+
+
+
     const classHTML = readFileSync('sampleCourseHTML.txt', 'utf8');
     console.log("Class Data Retrieved");
     
@@ -13,8 +19,11 @@ function main() {
 
     // Initialize DB and input data
     initDB().then(db => {
+        for (let i=0; i<subjectID.length; i++) {
+            createSubjectEntry(db, [subjectID[i].value, subjectID[i].label]);
+        }
         for (let i = 0; i < allClassData.length; i++) {
-            createEntry(db, allClassData[i]);
+            createClassEntry(db, allClassData[i]);
         }
         console.log("Data input into database.");
         getAllEntries(db);
