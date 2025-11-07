@@ -1,14 +1,18 @@
-const initSqlJs = require("sql.js");
+import initSqlJs from "sql.js";
 
-function initDB() {
+
+export function initDB() {
     return initSqlJs().then(SQL => {
         const db = new SQL.Database();
+
+        //New Table for subject Data, subjectID and subjectName; subjectID is primary key
         db.run(`CREATE TABLE IF NOT EXISTS subjectData (
             subjectID TEXT PRIMARY KEY,
             subjectName TEXT
         );`);
 
 
+        //We will likely have to change this eventually.
         db.run(`CREATE TABLE IF NOT EXISTS classData (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             enroll TEXT,
@@ -25,16 +29,18 @@ function initDB() {
     });
 }
 
-function createSubjectEntry(db, subjectData) {
+//Separate entry functions for different types of data
+export function createSubjectEntry(db, subjectData) {
     db.run(`INSERT INTO subjectData (subjectID, subjectName) VALUES (?, ?);`, subjectData);
 }
 
-function createClassEntry(db, classData) {
+//Original Xavier function renamed from createEntry to createClassEntry
+export function createClassEntry(db, classData) {
     db.run(`INSERT INTO classData (enroll, section, status, waitlist, info, day, time, location, units, instructor)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, classData);
 }
 
-function getAllEntries(db) {
+export function getAllEntries(db) {
 
     const subject_stmt = db.prepare("SELECT * FROM subjectData;");
     const subject_results = [];
@@ -53,5 +59,3 @@ function getAllEntries(db) {
     stmt.free();
     // return results;
 }
-
-module.exports = { initDB, createClassEntry, createSubjectEntry, getAllEntries };
