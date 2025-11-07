@@ -1,5 +1,5 @@
 //Takes in HTML file that contains class/discussion information and scrapes for desired data.
-export function getClassData(classHTML) {
+export function getClassData(classHTML, subjectID, classID) {
     const urlBase = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
     const subjectCode = "COM SCI";
     const courseID = "35L";
@@ -33,7 +33,7 @@ export function getClassData(classHTML) {
     const minLength = Math.min(...allMatches.map(patternMatchArr => patternMatchArr.length));
     let allClassData = [];
     for (let j = 0; j < allMatches[minLength].length; j++) {
-        let individualClassData = [];
+        let individualClassData = [subjectID, classID];
         for (let i = 0; i < allMatches.length; i++) {
             individualClassData.push(allMatches[i][j]);
             // console.log(allMatches[i][j]);
