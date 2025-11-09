@@ -1,7 +1,4 @@
-import fs from "fs";
-
 // ---------------- FUNCTIONS FROM BEFORE ----------------
-
 function getCatalogStr(courseID) {
     let index1 = 0;
     while (index1 < courseID.length && /[A-Za-z]/.test(courseID[index1])) index1++;
@@ -112,17 +109,16 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
 
     //console.log("Requesting:", url);
 
-    try {
+        try {
         const response = await fetch(url, { headers });
         const text = await response.text();
+
         console.log("Status:", response.status);
 
-        fs.writeFileSync("response.txt", text, "utf-8");
-        console.log("Saved to response.txt");
+        // Return the HTML text instead of saving it
+        return text;
     } catch (err) {
         console.error("Request failed:", err);
+        return null;
     }
 }
-
-// ---------------- USAGE ----------------
-fetchCourse("MATH", "31A", "25F", 2);
