@@ -29,7 +29,7 @@ async function main() {
     // Initialize DB and input data
     initDB().then(db => {
         for (let i=0; i<subjectID.length; i++) {
-            createSubjectEntry(db, [subjectID[i].value, subjectID[i].label]);
+            createSubjectEntry(db, [subjectID[i].classID, subjectID[i].className]);
         }
         for (let i = 0; i < csClasses.length; i++) {
             createSubjectClassEntry(db, ["COM SCI", csClasses[i].classID, csClasses[i].className]);
@@ -58,7 +58,7 @@ async function main() {
         console.log(getSectionEndTime(db, "COM SCI", "35L", "Dis 1A"));
         console.log("Fetch COM SCI 35L Dis 1A avail: ");
         console.log(getSectionAvail(db, "COM SCI", "35L", "Dis 1A"));
-        console.log(testa(db));
+        // console.log(testa(db));
     });
 }
 
