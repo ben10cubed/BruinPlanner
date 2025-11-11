@@ -1,7 +1,7 @@
 /**
  * Fetches and parses UCLA subject codes for a given term.
  * @param {string} term - The UCLA term code (e.g. "26W").
- * @returns {Promise<Array<{label: string, value: string}>>} List of majors/subjects.
+ * @returns {Promise<Array<{classID: string, className: string}>>} List of majors/subjects.
  */
 export async function getSubjectID(term = "26W") {
   const timestamp = Date.now();
@@ -38,7 +38,10 @@ export async function getSubjectID(term = "26W") {
     const m = pattern.exec(p);
     if (m) {
       const [_, label, value] = m;
-      data.push({ label, value: value.trim() });
+      data.push({
+        classID: value.trim(),   // was "value"
+        className: label.trim()  // was "label"
+      });
     }
   }
 
@@ -48,3 +51,6 @@ export async function getSubjectID(term = "26W") {
 
   return data;
 }
+
+// Example usage:
+// console.log(await getSubjectID("26W"));
