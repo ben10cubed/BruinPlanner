@@ -27,7 +27,6 @@ export async function getClassID(term, subjectId) {
     const text = await response.text();
 
     const regex = /aria-disabled="false">(.*?)</g;
-    const results = [];
     let match;
     while ((match = regex.exec(text)) !== null) {
       if (match[1].length === 0) continue;
@@ -100,3 +99,5 @@ export async function getClassID(term, subjectId) {
     })
     .filter(entry => entry.classID && entry.className);
 }
+
+console.log(await getClassID("26W", "COM SCI"));
