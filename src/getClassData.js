@@ -1,5 +1,3 @@
-import { time } from "node:console";
-
 //Takes in HTML file that contains class/discussion information and scrapes for desired data.
 export function getClassData(classHTML, subjectID, classID) {
     const urlBase = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
