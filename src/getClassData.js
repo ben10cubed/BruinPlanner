@@ -1,3 +1,5 @@
+import { time } from "node:console";
+
 //Takes in HTML file that contains class/discussion information and scrapes for desired data.
 export function getClassData(classHTML, subjectID, classID) {
     const urlBase = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
@@ -18,13 +20,33 @@ export function getClassData(classHTML, subjectID, classID) {
         new RegExp("instructorColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g")
     ];
     const regexRemoveBreaks = new RegExp("<w?br\\s*/?>");
+    const regexTimeCleanup = new RegExp("^(?<startHour>[0-9]{1,2})(?<startMinutes>(:[0-9]{2})?)(?<startDayPart>(a|p)m)--(?<endHour>[0-9]{1,2})(?<endMinutes>(:[0-9]{2})?)(?<endDayPart>(a|p)m)$");
+    const indexTimeColumn = 7; // Index of time column in allMatches array (later in code)
+
+    // TODO: Regex other information such as "No Waitlist, 0 of 40 Taken"
     
     // Retrieve all matches from each pattern into allMatches. This matches the form [enrollMatches[], sectionMatches[], ...]
     let allMatches = [];
     for (let i = 0; i < regexPatterns.length; i++) {
         let patternMatches = [];
-        for (const match of classHTML.matchAll(regexPatterns[i])) {
-            patternMatches.push(match.groups.data.replace(regexRemoveBreaks, "-"));
+        if (i === indexTimeColumn){ // Retrieve start/end times from timeColumn
+            for (const match of classHTML.matchAll(regexPatterns[i])) {
+                let timeSlot = match.groups.data.replace(regexRemoveBreaks, "-").match(regexTimeCleanup);
+                let startTime = convertTo24Hour(timeSlot.groups.startHour, timeSlot.groups.startMinutes.slice(1), timeSlot.groups.startDayPart); // Convert time to 24hr format
+                patternMatches.push(startTime);
+            }
+            allMatches.push(patternMatches); // Push start times to allMatches
+            patternMatches = []; // Reset patternMatches for end times
+            for (const match of classHTML.matchAll(regexPatterns[i])) {
+                let timeSlot = match.groups.data.replace(regexRemoveBreaks, "-").match(regexTimeCleanup);
+                let endTime = convertTo24Hour(timeSlot.groups.endHour, timeSlot.groups.endMinutes.slice(1), timeSlot.groups.endDayPart); // Convert time to 24hr format
+                patternMatches.push(endTime);
+            }
+        }
+        else{
+            for (const match of classHTML.matchAll(regexPatterns[i])) {
+                patternMatches.push(match.groups.data.replace(regexRemoveBreaks, "-").trim());
+            }
         }
         allMatches.push(patternMatches);
     }
@@ -43,3 +65,19 @@ export function getClassData(classHTML, subjectID, classID) {
     return allClassData;
 }
 
+// Convert 12-hour time to 24-hour time in HHMM format (string)
+function convertTo24Hour(hour, minutes, dayPart) {
+    let convertedTime = parseInt(hour) * 100;
+    if (dayPart === "pm"){
+        if (convertedTime !== 1200){
+            convertedTime += 1200;
+        }
+    }
+    else{
+        if (convertedTime === 1200){
+            convertedTime = 0;
+        }
+    }
+    convertedTime += parseInt(minutes) ? parseInt(minutes) : 0;
+    return convertedTime.toString().padStart(4, '0');;
+}
