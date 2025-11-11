@@ -25,13 +25,13 @@ async function main() {
     
     const allClassData = await getClassData(classHTML, "COM SCI", "35L");
 
+    const csClasses = await getClassID("26W", "COM SCI");
     // Initialize DB and input data
     initDB().then(db => {
         for (let i=0; i<subjectID.length; i++) {
             createSubjectEntry(db, [subjectID[i].value, subjectID[i].label]);
         }
-        let csClasses = getClassID("26W", "COM SCI");
-        for (let i = 0; i < csClasses.length; i++){
+        for (let i = 0; i < csClasses.length; i++) {
             createSubjectClassEntry(db, ["COM SCI", csClasses[i].classID, csClasses[i].className]);
         }
         for (let i = 0; i < allClassData.length; i++) {
