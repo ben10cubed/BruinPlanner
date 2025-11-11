@@ -71,8 +71,14 @@ function getTable(stmt){
 // Return all entries in all tables
 export function getAllEntries(db) {
     const subject_table = getTable(db.prepare("SELECT * FROM subjectData;"));
-    const class_table = getTable(db.prepare("SELECT * FROM sectionData;"));
-    return [subject_table, class_table];
+    const class_table = getTable(db.prepare("SELECT * FROM classData;"));
+    const disc_table = getTable(db.prepare("SELECT * FROM sectionData;"));
+    return [subject_table, class_table, disc_table];
+}
+
+export function testa(db) {
+    const class_table = getTable(db.prepare("SELECT * FROM classData;"));
+    return class_table;
 }
 
 // Return all entries for a specific subjectID and classID
