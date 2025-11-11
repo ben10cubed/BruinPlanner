@@ -99,5 +99,3 @@ export async function getClassID(term, subjectId) {
     })
     .filter(entry => entry.classID && entry.className);
 }
-
-console.log(await getClassID("26W", "COM SCI"));
