@@ -1,3 +1,9 @@
+import he from "he";
+
+/**
+ * Fetches UCLA course titles for a given subject and term.
+ * Cleans double-encoded HTML entities and handles duplicate classIDs intelligently.
+ */
 export async function getClassID(term, subjectId) {
   const urlFirstPageCheck = `https://sa.ucla.edu/ro/public/soc/Results?t=${term}&sBy=subject&subj=${encodeURIComponent(subjectId)}&catlg=&cls_no=&undefined=Go&btnIsInIndex=btn_inIndex`;
   const results = [];
@@ -13,16 +19,15 @@ export async function getClassID(term, subjectId) {
   const splitParts = (name) => name.split(":").map(s => s.trim());
   const hasKeywordAnywhere = (name) => /lecture|seminar/i.test(name);
 
-  //The classes on the registra are sorted in order
-  //(Concurrent - need to check) Classes with same ID will show up consecutively
   async function processText(text) {
     const regex = /aria-disabled="false">(.*?)</g;
     for (const match of text.matchAll(regex)) {
-      const rawLine = match[1].trim();
+      // Decode twice to handle double-encoded HTML entities like &amp;#39;
+      const rawLine = he.decode(he.decode(match[1].trim()));
       if (!rawLine) continue;
 
       const [classID, ...rest] = rawLine.split(" - ");
-      const className = rest.join(" - ").trim();
+      const className = he.decode(he.decode(rest.join(" - ").trim()));
       const trimmedID = (classID || "").trim();
       if (!trimmedID) continue;
 
@@ -32,14 +37,15 @@ export async function getClassID(term, subjectId) {
         lastClassID = trimmedID;
         lastClassEntry = { classID: trimmedID, className };
       } else {
-        // Duplicate course ID
+        // Duplicate course ID → apply smart selection
         const prev = lastClassEntry.className;
         const curr = className;
+
         const prevHasKey = hasKeywordAnywhere(prev);
         const currHasKey = hasKeywordAnywhere(curr);
 
         if (prevHasKey && currHasKey) {
-          // Both have Lecture/Seminar → remove the last colon-separated part
+          // Both have Lecture/Seminar → remove last colon-separated part
           const parts = splitParts(curr);
           const shortened = parts.slice(0, -1).join(" : ").trim();
           lastClassEntry = { classID: trimmedID, className: shortened };
@@ -50,7 +56,7 @@ export async function getClassID(term, subjectId) {
           // Only current has keyword → keep previous (do nothing)
           continue;
         } else {
-          // Neither has keyword → keep first
+          // Neither has keyword → keep the first
           continue;
         }
       }
@@ -68,7 +74,7 @@ export async function getClassID(term, subjectId) {
     return [];
   }
 
-  // Fetch additional pages
+  // Paginated results
   const urlFurtherPageCheck = "https://sa.ucla.edu/ro/public/soc/Results/CourseTitlesView?search_by=subject&";
   const model = {
     subj_area_cd: subjectId,
