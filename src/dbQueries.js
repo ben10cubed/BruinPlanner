@@ -15,6 +15,7 @@ export function initDB() {
         db.run(`CREATE TABLE IF NOT EXISTS subjectClassID (
             subjectID TEXT,
             classID TEXT,
+            className TEXT,
             PRIMARY KEY (subjectID, classID)
             );`);
 
@@ -83,9 +84,16 @@ export function searchSubjectArea(db, searchTerm) {
     return results;
 }
 
-// Return subject + class ID based on complete/incomplete search term
+// Return subject + class ID + class name based on complete/incomplete search term
 export function searchClassID(db, subjectID, searchTerm) {
     const stmt = db.prepare(`SELECT * FROM subjectClassID WHERE subjectID = '${subjectID}' AND classID LIKE '${searchTerm}%';`);
+    const results = getTable(stmt);
+    return results;
+}
+
+// Return subject + class ID + class Name based on complete/incomplete class name search term
+export function searchClassName(db, subjectID, searchTerm) {
+    const stmt = db.prepare(`SELECT * FROM subjectClassID WHERE subjectID = '${subjectID}' AND className LIKE '${searchTerm}%';`);
     const results = getTable(stmt);
     return results;
 }
