@@ -15,6 +15,10 @@ function getCatalogStr(courseID) {
     return num + suffix + prefix;
 }
 
+//Original format was incorrect
+//Length is always fixed 8
+//Prefix and suffix can both be up to two characters long
+//Then pad each of those up to 2 characters
 function getCatalogStrPadded(courseID) {
     let index1 = 0;
     while (index1 < courseID.length && /[A-Za-z]/.test(courseID[index1])) index1++;
@@ -23,9 +27,9 @@ function getCatalogStrPadded(courseID) {
     while (index2 >= 0 && /[A-Za-z]/.test(courseID[index2])) index2--;
     index2++;
 
-    let prefix = courseID.substring(0, index1);
+    let prefix = courseID.substring(0, index1).padEnd(2, " ");
     let num = courseID.substring(index1, index2);
-    let suffix = courseID.substring(index2);
+    let suffix = courseID.substring(index2).padEnd(2, " ");
 
     num = num.padStart(4, "0");
     suffix = suffix.padEnd(2, " ");
@@ -40,6 +44,9 @@ function getSubjectCodeWithoutSpace(subjectCode) {
     return subjectCode.replaceAll(" ", "");
 }
 
+//This still needs to be tested slightly.
+//Technically it fails for CM248 STATS, but it does return the correct values
+//Maybe this term just doesn't affect the results
 function isMultiListed(courseID) {
     return courseID[0] === "M" ? "y" : "n";
 }
@@ -73,7 +80,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
         ClassNumber: lecture_num === null ? null : " 00"+String(lecture_num)+"  ",
         SequenceNumber: null,
         Path: getSubjectCodeWithoutSpace(subject_code) + getCatalogStr(course_ID),
-        MultiListedClassFlag: isMultiListed(course_ID),
+        MultiListedClassFlag: isMultiListed(course_ID), //From testing, this doesn't actually seem to matter as an input
         Token: Token
     };
 
@@ -112,7 +119,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
         "X-Requested-With": "XMLHttpRequest"
     };
 
-    //console.log("Requesting:", url);
+    // console.log("Requesting:", url);
 
     try {
         const response = await fetch(url, { headers });
@@ -127,3 +134,5 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
         return null;
     }
 }
+
+// console.log(await fetchCourse("COM SCI", "M152A", "26W"));

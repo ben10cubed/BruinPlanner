@@ -7,14 +7,25 @@ export function getClassData(classHTML, subjectID, classID) {
     const regexPatterns = [
         new RegExp("enrollColumn[^>]*>([^<>]*<[^>]*>){2}Select (?<data>[^<]*)</label>", "g"), 
         new RegExp("sectionColumn[^>]*>([^<>]*<[^>]*>){6}\\s*(?<data>[^<]*)<span", "g"),
+
+        //This works if class isn't closed, otherwise it returns undefined, which is fine imo
+        //If class is closed, we don't really need the data anyways
         new RegExp("statusColumn[^>]*>([^<>]*<[^>]*>){3}\\s*[^<]*<br( /)?>(?<data>[^<]*(<br( /)?>[^<]*)*)</p>", "g"),
-        new RegExp("statusColumn[^>]*>([^<>]*<[^>]*>){3}\\s*(?<data>[CO])[^<]*(<br( /)?>[^<]*)*</p>", "g"), 
+        new RegExp('<div class="statusColumn"[^>]*>.*?</i>\\s*(?<data>[^<]+)', 'g'), 
         new RegExp("waitlistColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
         new RegExp("infoColumn[^>]*>([^<>]*<[^>]*>){4}\\s*(?<data>[^<]*)</span>", "g"), 
+        //Need to be able to get multiple lines of days
+        //Different days can have different times
         new RegExp("dayColumn[^>]*>([^<>]*<[^>]*>){3}\\s*(?<data>[^<]*)</button>", "g"), 
+
+        //@Xavier you probably need to do a check before calculating the time. Sometimes when time is online, it gets messed up
+        //I haven't been able to reproduce this bug, but it happened once before
         new RegExp("timeColumn[^>]*>([^<>]*<[^>]*>){7}\\s*(?<data>[^<]*<wbr( /)?>[^<]*)</p>", "g"), 
-        new RegExp("locationColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<][A-Za-z0-9 ]*)\\s*</p>", "g"), 
+        //Need to be able to get Online -> Different types of Online. Online Online - Asynchronous   Online - Recorded
+        //I made a small change to the regex to allow for commas in location. Some of the locations have commas in them
+        new RegExp("locationColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<][A-Za-z0-9 ,]*)\\s*</p>", "g"), 
         new RegExp("unitsColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
+        //This is pretty much fixed now, which is good
         new RegExp("instructorColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*([^<>]*<[^>]*>)?[^<]*)</p>", "g")
     ];
     const regexRemoveBreaks = new RegExp("<w?br\\s*/?>");

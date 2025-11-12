@@ -26,28 +26,25 @@ async function main() {
     //In case anything break/doesn't work as intended/classes missing, please inform Ben.
 
     let randomSubject = getRandomInt(0, subjectID.length - 1);
-    let listID = await getClassID("26W", subjectID[randomSubject].classID);
+    console.log("Randomly selected subject:", subjectID[randomSubject]);
+    let listID = await getClassID("26W", subjectID[randomSubject].subjectID);
 
     let randomClass = getRandomInt(0, listID.length - 1);
-    let courseData = await fetchCourse(subjectID[randomSubject].classID, listID[randomClass].classID, "26W");
-
-
-    //Work in progress TODO;
-    // const classHTML = readFileSync('sampleCourseHTML.txt', 'utf8');
-    // console.log("Class Data Retrieved");
-    
-    const allClassData = await getClassData(courseData, subjectID[randomSubject].classID, listID[randomClass].classID);
-    console.log("Randomly selected subject:", subjectID[randomSubject]);
     console.log("Randomly selected class:", listID[randomClass]);
+    let courseData = await fetchCourse(subjectID[randomSubject].subjectID, listID[randomClass].classID , "26W");
+
+
+    
+    const allClassData = await getClassData(courseData, subjectID[randomSubject].subjectID, listID[randomClass].classID);
     console.log(allClassData);
 
 
-    // for (let i=1; i<=allClassData.length; i++) {
-    //     let discussionData = await fetchCourse(subjectID[randomSubject].classID, listID[randomClass].classID, "26W", i);
-    //     const classDisscusionData = await getClassData(discussionData, subjectID[randomSubject].classID, listID[randomClass].classID);
+    for (let i=1; i<=allClassData.length; i++) {
+        let discussionData = await fetchCourse(subjectID[randomSubject].subjectID, listID[randomClass].classID, "26W", i);
+        const classDisscusionData = await getClassData(discussionData, subjectID[randomSubject].subjectID, listID[randomClass].classID);
 
-    //     console.log(classDisscusionData);
-    // }
+        console.log(classDisscusionData);
+    }
 
 }
 
