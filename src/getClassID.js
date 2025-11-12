@@ -94,7 +94,7 @@ export async function getClassID(term, subjectId) {
   const modelEncoded = new URLSearchParams({ model: JSON.stringify(model) });
   const filterFlagsEncoded = new URLSearchParams({ FilterFlags: JSON.stringify(filterFlags) });
   const timestamp = Date.now();
-  let pageNum = 1;
+  let pageNum = 2;
 
   while (true) {
     const url = `${urlFurtherPageCheck}${modelEncoded}&pageNumber=${pageNum}&${filterFlagsEncoded}&_=${timestamp}`;
