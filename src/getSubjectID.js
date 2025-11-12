@@ -39,8 +39,8 @@ export async function getSubjectID(term = "26W") {
     if (m) {
       const [_, label, value] = m;
       data.push({
-        classID: value.trim(),   // was "value"
-        className: label.trim()  // was "label"
+        subjectID: value.trim(),   // was "classID"
+        subjectName: label.trim()  // was "className"
       });
     }
   }
