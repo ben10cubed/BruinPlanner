@@ -1,42 +1,343 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* ===== Global Reset ===== */
+body {
+  background: #f9fafb;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: #1e293b;
+  margin: 0;
+  padding: 0;
+}
+
+h2, h3, h4 {
+  color: #003b8e;
+  margin: 0 0 8px 0;
+}
+
+/* ===== Layout Containers ===== */
+.main-container {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px;
+}
+
+/* ===== Left Panel: Class Search ===== */
+.class-search {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+}
+
+.class-search h2 {
+  margin-bottom: 12px;
+}
+
+.search-box {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 14px;
+  background: #fdfdfd;
+}
+
+.search-box label {
+  font-size: 11px;
+  color: #475569;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  margin-bottom: 6px;
+}
+
+.search-results {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  background: white;
+}
+
+.course-item {
+  border-bottom: 1px solid #f3f3f3;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.course-item strong {
+  color: #003b8e;
+}
+
+.section-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.add-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  background: #2563eb;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #1d4ed8;
+}
+
+/* ===== Right Panel: Timetable + Selected ===== */
+.right-panel {
+  flex: 1;
+}
+
+/* ===== Timetable Container ===== */
+.timetable-container {
+  width: 100%;
+  max-width: 1100px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 12px 18px 18px;
+}
+
+/* Day Headers */
+.timetable-header {
+  display: grid;
+  grid-template-columns: 70px repeat(5, 1fr);
   text-align: center;
+  font-weight: 600;
+  color: #003b8e;
+  margin-bottom: 4px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.day-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 4px 0;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Grid Layout */
+.timetable-grid {
+  display: grid;
+  position: relative;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  grid-auto-flow: dense;
+
+  /* Keep consistent size, even when empty */
+  min-height: 700px;
+  min-width: 650px; /* ✅ ensures day columns don’t collapse */
+  height: auto;
+  overflow: hidden;
+
+  /* Fix the column widths explicitly */
+  grid-template-columns: 70px repeat(5, minmax(120px, 1fr)); 
+  grid-template-rows: repeat(48, 1fr); /* 15-min slots */
+}
+
+
+/* Background grid cells */
+.grid-cell {
+  border-top: 1px solid #f1f5f9;
+  border-left: 1px solid #f1f5f9;
+}
+
+/* Time labels */
+.time-label {
+  text-align: right;
+  padding-right: 6px;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+/* ===== Class Block ===== */
+.timetable-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 4px 6px;
+  border: 1px solid;
+  border-radius: 6px;
+  background-clip: padding-box;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.1s ease;
+}
+
+.timetable-block:hover {
+  transform: scale(1.02);
+  z-index: 5;
+}
+
+/* Inside text */
+.block-title {
+  font-weight: 700;
+  font-size: 11.5px;
+}
+
+.block-label,
+.block-time,
+.block-loc {
+  font-weight: 500;
+  font-size: 10.5px;
+}
+
+/* ===== Selected Sections ===== */
+.selected-sections {
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  background: white;
+  font-size: 11.5px;
+}
+
+.selected-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selected-item {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.clear-btn,
+.remove-btn {
+  padding: 2px 6px;
+  font-size: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clear-btn:hover,
+.remove-btn:hover {
+  background: #1d4ed8;
+}
+
+/* ===== Scroll & Responsiveness ===== */
+.search-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 6px;
+}
+
+@media (max-width: 900px) {
+  .main-container {
+    flex-direction: column;
   }
-  to {
-    transform: rotate(360deg);
+
+  .timetable-grid {
+    overflow-x: auto;
   }
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.timetable-container {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  width: 100%;
+  max-width: 1000px;
+  height: 700px;             /* fixed visible area */
+  overflow-y: auto;          /* ✅ vertical scroll enabled */
+  overflow-x: hidden;        /* fixed width */
+  margin: 0 auto;
 }
 
-.card {
-  padding: 2em;
+.timetable-header {
+  display: grid;
+  grid-template-columns: 70px repeat(5, 1fr);
+  background: #f9fafb;
+  border-bottom: 1px solid #ddd;
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
-.read-the-docs {
-  color: #888;
+.day-header {
+  text-align: center;
+  font-weight: bold;
+  padding: 8px;
+  border-left: 1px solid #ddd;
+  background: #f9fafb;
+}
+
+.timetable-grid {
+  display: grid;
+  grid-template-columns: 70px repeat(5, 1fr);
+  width: 100%;
+  /* ✅ allow tall grid to overflow and trigger scroll */
+  min-height: 100%;
+  position: relative;
+}
+
+.time-label {
+  border-top: 1px solid #eee;
+  text-align: right;
+  padding-right: 6px;
+  font-size: 12px;
+  color: #555;
+  background: white;
+  z-index: 1;
+}
+
+.grid-cell {
+  border: 0.5px solid #f0f0f0;
+}
+
+.timetable-block {
+  position: relative;
+  border: 2px solid;
+  border-radius: 6px;
+  background-color: rgba(37, 99, 235, 0.1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+}
+
+.block-title,
+.block-label,
+.block-time,
+.block-loc {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.block-title {
+  font-weight: bold;
+  font-size: 13px;
 }

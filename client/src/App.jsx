@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
+import "./App.css";
 
-//mock classes just to test
-
+// Mock class data
 const ALL_CLASSES = [
   {
     id: "COMSCI-31",
@@ -77,7 +77,6 @@ const ALL_CLASSES = [
   }
 ];
 
-//helpers
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const START_HOUR = 8;
 const END_HOUR = 20;
@@ -87,14 +86,10 @@ function timeToMinutes(t) {
   return h * 60 + m;
 }
 
-
-
-
 export default function App() {
   const [page, setPage] = useState("login");
-
   return (
-    <div style={{ fontFamily: "sans-serif", padding: "16px" }}>
+    <div>
       {page === "login" ? (
         <LoginPage onLogin={() => setPage("main")} />
       ) : (
@@ -104,52 +99,26 @@ export default function App() {
   );
 }
 
-
-
-
+/* LOGIN PAGE */
 function LoginPage({ onLogin }) {
   return (
-    <div
-      style={{
-        maxWidth: "400px",
-        margin: "80px auto",
-        padding: "24px",
-        border: "1px solid #ddd",
-        borderRadius: "8px"
-      }}
-    >
+    <div className="login-card">
       <h2>Dummy Login</h2>
-      <p style={{ fontSize: "14px", marginBottom: "16px" }}>
-        Placeholder only. Click to continue to the scheduler.
-      </p>
-      <button
-        onClick={onLogin}
-        style={{
-          padding: "10px 16px",
-          borderRadius: "4px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Login
-      </button>
+      <p>Placeholder only. Click to continue to the scheduler.</p>
+      <button onClick={onLogin}>Login</button>
     </div>
   );
 }
 
-
-
-
+/* MAIN PAGE */
 function MainPage() {
   const [subjectQuery, setSubjectQuery] = useState("");
   const [classQuery, setClassQuery] = useState("");
   const [selectedSections, setSelectedSections] = useState([]);
 
-  // filter classes based on search inputs
   const filteredCourses = useMemo(() => {
     const s = subjectQuery.trim().toLowerCase();
     const c = classQuery.trim().toLowerCase();
-
     return ALL_CLASSES.filter((course) => {
       const subjectMatches = !s || course.subject.toLowerCase().includes(s);
       const classMatches =
@@ -160,19 +129,10 @@ function MainPage() {
     });
   }, [subjectQuery, classQuery]);
 
-
-  //just basic class adding function for manual add AFTER schedule generation (hasn't been implemented)
   const handleAddSection = (course, section) => {
     setSelectedSections((prev) => {
-      if (prev.some((s) => s.id === section.id)) return prev; // dedupe
-      return [
-        ...prev,
-        {
-          ...section,
-          courseId: course.id,
-          courseTitle: course.title
-        }
-      ];
+      if (prev.some((s) => s.id === section.id)) return prev;
+      return [...prev, { ...section, courseId: course.id, courseTitle: course.title }];
     });
   };
 
@@ -180,75 +140,35 @@ function MainPage() {
     setSelectedSections((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const handleClear = () => {
-    setSelectedSections([]);
-  };
+  const handleClear = () => setSelectedSections([]);
 
   return (
-    <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-      {/* LEFT: search + results */}
-      <div style={{ flex: 1 }}>
+    <div className="main-container">
+      {/* LEFT SEARCH PANEL */}
+      <div className="search-panel">
         <h2>Class Search</h2>
 
-        <div
-          style={{
-            marginBottom: "12px",
-            padding: "10px",
-            border: "1px solid #eee",
-            borderRadius: "8px"
-          }}
-        >
+        <div className="search-box">
           <h4>Search by Subject & Class</h4>
-          <div style={{ marginBottom: "6px" }}>
-            <label
-              style={{ fontSize: "11px", display: "block", marginBottom: "2px" }}
-            >
-              Subject ID
-            </label>
-            <input
-              value={subjectQuery}
-              onChange={(e) => setSubjectQuery(e.target.value)}
-              placeholder="e.g. COM SCI, MATH, PHYSICS"
-              style={{ width: "100%", padding: "6px", fontSize: "12px" }}
-            />
-          </div>
-          <div>
-            <label
-              style={{ fontSize: "11px", display: "block", marginBottom: "2px" }}
-            >
-              Class (Number or Title)
-            </label>
-            <input
-              value={classQuery}
-              onChange={(e) => setClassQuery(e.target.value)}
-              placeholder="e.g. 31 or Linear Algebra"
-              style={{ width: "100%", padding: "6px", fontSize: "12px" }}
-            />
-          </div>
+          <label>Subject ID</label>
+          <input
+            value={subjectQuery}
+            onChange={(e) => setSubjectQuery(e.target.value)}
+            placeholder="e.g. COM SCI, MATH, PHYSICS"
+          />
+          <label>Class (Number or Title)</label>
+          <input
+            value={classQuery}
+            onChange={(e) => setClassQuery(e.target.value)}
+            placeholder="e.g. 31 or Linear Algebra"
+          />
         </div>
 
-        <div
-          style={{
-            maxHeight: "400px",
-            overflowY: "auto",
-            border: "1px solid #eee",
-            borderRadius: "8px",
-            padding: "8px",
-            fontSize: "11px"
-          }}
-        >
+        <div className="search-results">
           <h4>Search Results</h4>
           {filteredCourses.length === 0 && <p>No matching courses.</p>}
-
           {filteredCourses.map((course) => (
-            <div
-              key={course.id}
-              style={{
-                borderBottom: "1px solid #f3f3f3",
-                paddingBottom: "6px",
-                marginBottom: "6px"
-              }}
-            >
+            <div key={course.id} className="course-card">
               <strong>
                 {course.subject} {course.number}
               </strong>{" "}
@@ -268,16 +188,7 @@ function MainPage() {
                       {sec.label}: {sec.days.join(", ")} {sec.start}-{sec.end} @{" "}
                       {sec.location}
                     </span>
-                    <button
-                      onClick={() => handleAddSection(course, sec)}
-                      style={{
-                        padding: "2px 6px",
-                        fontSize: "10px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                        cursor: "pointer"
-                      }}
-                    >
+                    <button onClick={() => handleAddSection(course, sec)}>
                       Add to timetable
                     </button>
                   </div>
@@ -288,34 +199,15 @@ function MainPage() {
         </div>
       </div>
 
-      {/* RIGHT: timetable + selected sections */}
-      <div style={{ flex: 1 }}>
+      {/* RIGHT PANEL */}
+      <div className="selection-panel">
         <h3>Timetable Preview</h3>
         <Timetable sections={selectedSections} />
 
-        <div
-          style={{
-            marginTop: "8px",
-            padding: "8px",
-            border: "1px solid #eee",
-            borderRadius: "8px",
-            fontSize: "11px"
-          }}
-        >
+        <div className="selection-list">
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <strong>Selected Sections</strong>
-            <button
-              onClick={handleClear}
-              style={{
-                padding: "2px 6px",
-                fontSize: "10px",
-                borderRadius: "4px",
-                border: "1px solid #ccc",
-                cursor: "pointer"
-              }}
-            >
-              Clear
-            </button>
+            <button onClick={handleClear}>Clear</button>
           </div>
           {selectedSections.length === 0 && <p>None yet.</p>}
           {selectedSections.map((s) => (
@@ -330,18 +222,7 @@ function MainPage() {
               <span>
                 {s.courseId} {s.label} — {s.days.join(", ")} {s.start}-{s.end}
               </span>
-              <button
-                onClick={() => handleRemoveSection(s.id)}
-                style={{
-                  padding: "1px 6px",
-                  fontSize: "10px",
-                  borderRadius: "4px",
-                  border: "1px solid #ccc",
-                  cursor: "pointer"
-                }}
-              >
-                Remove
-              </button>
+              <button onClick={() => handleRemoveSection(s.id)}>Remove</button>
             </div>
           ))}
         </div>
@@ -350,127 +231,117 @@ function MainPage() {
   );
 }
 
-
-
-
-
-
-//basic timetable, might edit later
+/* TIMETABLE */
 function Timetable({ sections }) {
+  const COLORS = [
+    "#2563eb", "#16a34a", "#dc2626", "#eab308", "#9333ea",
+    "#f97316", "#0ea5e9", "#10b981", "#d946ef", "#f43f5e",
+    "#3b82f6", "#a16207", "#6d28d9", "#059669", "#ef4444",
+    "#0284c7", "#ca8a04", "#7c3aed", "#facc15", "#ea580c"
+  ];
+
+  const colorMap = useMemo(() => {
+    const map = new Map();
+    let idx = 0;
+    for (const sec of sections) {
+      const key = sec.courseId || sec.subject + sec.number || sec.title;
+      if (!map.has(key)) {
+        map.set(key, COLORS[idx % COLORS.length]);
+        idx++;
+      }
+    }
+    return map;
+  }, [sections]);
+
+  const getRowFromTime = (time) => {
+    const [h, m] = time.split(":").map(Number);
+    return (h - START_HOUR) * 4 + Math.floor(m / 15) + 1;
+  };
+
+  // Define visible time range (8 AM to 6 PM)
+  const visibleEndHour = 18;
+
+  // Determine if any classes go beyond 6 PM — extend scrollable grid
+  const maxHour =
+    sections.length > 0
+      ? Math.max(
+          ...sections.map((s) => parseInt(s.end.split(":")[0]) || visibleEndHour)
+        )
+      : visibleEndHour;
+
+  const totalRows = (maxHour - START_HOUR) * 4;
+
   return (
-    <div
-      style={{
-        position: "relative",
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "4px",
-        fontSize: "9px",
-        height: "340px",
-        maxWidth: "800px"
-      }}
-    >
-      {/*days */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `40px repeat(${DAYS.length}, 1fr)`,
-          fontWeight: "bold",
-          fontSize: "9px",
-          marginBottom: "2px"
-        }}
-      >
-        <div />
+    <div className="timetable-container">
+      <div className="timetable-header">
+        <div className="time-col"></div>
         {DAYS.map((d) => (
-          <div key={d} style={{ textAlign: "center" }}>
-            {d}
-          </div>
+          <div key={d} className="day-header">{d}</div>
         ))}
       </div>
 
-      {/* time */}
       <div
+        className="timetable-grid"
         style={{
-          position: "relative",
-          display: "grid",
-          gridTemplateColumns: `40px repeat(${DAYS.length}, 1fr)`,
-          gridTemplateRows: `repeat(${END_HOUR - START_HOUR}, 1fr)`,
-          gap: "1px",
-          height: "calc(100% - 16px)"
+          gridTemplateColumns: `70px repeat(${DAYS.length}, 1fr)`,
+          gridTemplateRows: `repeat(${totalRows}, 1fr)`,
+          height: `${(visibleEndHour - START_HOUR) * 50}px` // about 10 hours visible
         }}
       >
-        {/* hours, and time "blocks" */}
-        {Array.from({ length: END_HOUR - START_HOUR }).map((_, i) => {
+        {/* Time Labels */}
+        {Array.from({ length: (maxHour - START_HOUR) }).map((_, i) => {
           const hour = START_HOUR + i;
           return (
-            <React.Fragment key={hour}>
-              <div
-                style={{
-                  fontSize: "8px",
-                  textAlign: "right",
-                  paddingRight: "2px"
-                }}
-              >
-                {hour}:00
-              </div>
-              {DAYS.map((d) => (
-                <div
-                  key={d + hour}
-                  style={{
-                    borderTop: "1px solid #f5f5f5",
-                    borderLeft: "1px solid #f5f5f5"
-                  }}
-                />
-              ))}
-            </React.Fragment>
+            <div
+              key={hour}
+              className="time-label"
+              style={{ gridRow: `${i * 4 + 1} / span 4`, gridColumn: 1 }}
+            >
+              {hour}:00
+            </div>
           );
         })}
 
-        {/* render blocks for selected sections */}
+        {/* Empty grid cells */}
+        {DAYS.map((_, colIdx) =>
+          Array.from({ length: totalRows }).map((_, rowIdx) => (
+            <div
+              key={`${colIdx}-${rowIdx}`}
+              className="grid-cell"
+              style={{
+                gridColumn: colIdx + 2,
+                gridRow: rowIdx + 1
+              }}
+            />
+          ))
+        )}
+
+        {/* Class Blocks */}
         {sections.map((sec) =>
           sec.days.map((day) => {
             const col = DAYS.indexOf(day);
             if (col === -1) return null;
 
-            const start = timeToMinutes(sec.start);
-            const end = timeToMinutes(sec.end);
-            const total = (END_HOUR - START_HOUR) * 60;
-
-            const top = ((start - START_HOUR * 60) / total) * 100;
-            const height = ((end - start) / total) * 100;
+            const startRow = getRowFromTime(sec.start);
+            const endRow = getRowFromTime(sec.end);
+            const color = colorMap.get(sec.courseId || sec.title) || "#3b82f6";
 
             return (
               <div
-                key={sec.id + day}
+                key={`${sec.id}-${day}`}
+                className="timetable-block"
                 style={{
-                  position: "absolute",
-                  left: `${
-                    ((col + 1) / (DAYS.length + 1)) * 100
-                  }%`,
-                  width: `${
-                    (1 / (DAYS.length + 1)) * 100 - 1
-                  }%`,
-                  top: `${top}%`,
-                  height: `${height}%`,
-                  borderRadius: "4px",
-                  border: "1px solid #555",
-                  padding: "2px",
-                  boxSizing: "border-box",
-                  overflow: "hidden",
-                  background: "#eef"
+                  gridColumn: col + 2,
+                  gridRow: `${startRow} / ${endRow}`,
+                  background: `${color}22`,
+                  borderColor: color,
+                  color
                 }}
               >
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "7px"
-                  }}
-                >
-                  {sec.courseId}
-                </div>
-                <div>
-                  {sec.label} {sec.start}-{sec.end}
-                </div>
-                <div>{sec.location}</div>
+                <div className="block-title">{sec.courseId}</div>
+                <div className="block-label">{sec.label}</div>
+                <div className="block-time">{sec.start}-{sec.end}</div>
+                <div className="block-loc">{sec.location}</div>
               </div>
             );
           })
