@@ -1,38 +1,34 @@
-import { readFileSync } from "node:fs";
-
 import { getSubjectID } from "./getSubjectID.js";
 import { getClassID } from "./getClassID.js";
 import { getClassData } from "./getClassData.js";
 import { initDB, createClassEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionStartTime, getSectionEndTime, getSectionAvail, getClasses, getSections, createSubjectClassEntry, testa } from "./dbQueries.js";
+import { fetchCourse } from "./getLectures.js";
 
 async function main() {
-    // Temporarily read from "sampleCourseHTML.txt"
-    // When the getHTML function is up in js, pipe that into here instead
+    // Placeholder SubjectID, ClassID, Term
+    let sampleSubjectID = "COM SCI";
+    let sampleClassID = "35L";
+    let sampleTerm = "26W";
+    let sampleLecture = 1;
 
     //Scrapes all of subject IDs
-    const subjectID = await getSubjectID("26W");
+    const subjectID = await getSubjectID(sampleTerm);
+    // Scrape all classes for sampleSubjectID
+    const sampleClasses = await getClassID(sampleTerm, sampleSubjectID);
 
-    //For each subject ID, scrape class ID.
-    //After some more testing, appears to work fine.
-    //In case anything break/doesn't work as intended/classes missing, please inform Ben.
-    for (let i = 0; i < subjectID.length; i++) {
-    //   await getClassID("26W", subjectID[i].value);
-    }
-
-    //Work in progress TODO;
-    const classHTML = readFileSync('sampleCourseHTML.txt', 'utf8');
+    // Get the HTML for a sample subject + class + lecture
+    const classHTML = await fetchCourse(sampleSubjectID, sampleClassID, sampleTerm, sampleLecture)
     console.log("Class Data Retrieved");
-    
-    const allClassData = await getClassData(classHTML, "COM SCI", "35L");
+    // Get the data for the sample subject + class + lecture (all discussion data)
+    const allClassData = await getClassData(classHTML, sampleSubjectID, sampleClassID);
 
-    const csClasses = await getClassID("26W", "COM SCI");
     // Initialize DB and input data
     initDB().then(db => {
         for (let i=0; i<subjectID.length; i++) {
             createSubjectEntry(db, [subjectID[i].classID, subjectID[i].className]);
         }
-        for (let i = 0; i < csClasses.length; i++) {
-            createSubjectClassEntry(db, ["COM SCI", csClasses[i].classID, csClasses[i].className]);
+        for (let i = 0; i < sampleClasses.length; i++) {
+            createSubjectClassEntry(db, [sampleSubjectID, sampleClasses[i].classID, sampleClasses[i].className]);
         }
         for (let i = 0; i < allClassData.length; i++) {
             createClassEntry(db, allClassData[i]);
