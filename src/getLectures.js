@@ -28,12 +28,8 @@ function getCatalogStrPadded(courseID) {
     index2++;
 
     let prefix = courseID.substring(0, index1).padEnd(2, " ");
-    let num = courseID.substring(index1, index2);
+    let num = courseID.substring(index1, index2).padStart(4, "0");
     let suffix = courseID.substring(index2).padEnd(2, " ");
-
-    num = num.padStart(4, "0");
-    suffix = suffix.padEnd(2, " ");
-    prefix = prefix.padEnd(2, " ");
 
     return (num + suffix + prefix);
 }
