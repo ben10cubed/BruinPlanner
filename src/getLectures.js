@@ -34,9 +34,10 @@ function getCatalogStrPadded(courseID) {
     return (num + suffix + " " + prefix).padEnd(8, " ");
 }
 
+//Previous edition only considered majors where there is one space.
+//Fixed this bug -> Consider AN N EA
 function getSubjectCodeWithoutSpace(subjectCode) {
-    const idx = subjectCode.indexOf(" ");
-    return idx === -1 ? subjectCode : subjectCode.slice(0, idx) + subjectCode.slice(idx + 1);
+    return subjectCode.replaceAll(" ", "");
 }
 
 function isMultiListed(courseID) {
@@ -78,6 +79,9 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
 
     let model_encoded = new URLSearchParams({ model: JSON.stringify(model) }).toString();
 
+    //Ben: Modified impacted
+    //We want all of these to be null to get unfiltered results
+    //We never noticed this, but previously lots of classes were being filtered out
     const FilterFlags = {
         enrollment_status: "O,W,C,X,T,S",
         advanced: "y",
@@ -88,7 +92,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
         meet_units: null,
         instructor: null,
         class_career: null,
-        impacted: "N",
+        impacted: null,
         enrollment_restrictions: null,
         enforced_requisites: null,
         individual_studies: null,
@@ -102,7 +106,6 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
     const timestamp = Date.now().toString();
 
     const url = `${url_base}${model_encoded}&${FilterFlags_encoded}&_=${timestamp}`;
-
     const headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -111,7 +114,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
 
     //console.log("Requesting:", url);
 
-        try {
+    try {
         const response = await fetch(url, { headers });
         const text = await response.text();
 

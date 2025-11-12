@@ -114,6 +114,6 @@ export async function getClassID(term, subjectId) {
 }
 
 //Example usage
-console.log(await getClassID("26W", "COM SCI"));
+// console.log(await getClassID("26W", "COM SCI"));
 // console.log(await getClassID("26W", "BIOENGR"));
 // console.log(await getClassID("26W", "ARTS ED"));
