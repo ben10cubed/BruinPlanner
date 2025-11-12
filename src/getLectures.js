@@ -27,11 +27,11 @@ function getCatalogStrPadded(courseID) {
     let num = courseID.substring(index1, index2);
     let suffix = courseID.substring(index2);
 
-    while (num.length < 4) num = "0" + num;
+    num = num.padStart(4, "0");
+    suffix = suffix.padEnd(2, " ");
+    prefix = prefix.padEnd(2, " ");
 
-    if (suffix.length === 0) suffix = " ";
-
-    return (num + suffix + " " + prefix).padEnd(8, " ");
+    return (num + suffix + prefix);
 }
 
 function getSubjectCodeWithoutSpace(subjectCode) {
