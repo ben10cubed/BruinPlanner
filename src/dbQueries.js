@@ -47,12 +47,13 @@ export function createSubjectEntry(db, subjectData) {
     db.run(`INSERT INTO subjectData (subjectID, subjectName) VALUES (?, ?);`, subjectData);
 }
 
-export function createSubjectClassEntry(db, classData) {
+// Function renamed from createSubjectClassEntry to createClassEntry
+export function createClassEntry(db, classData) {
     db.run(`INSERT INTO classData (subjectID, classID, className) VALUES (?, ?, ?);`, classData);
 }
 
-//Original Xavier function renamed from createEntry to createClassEntry
-export function createClassEntry(db, sectionData) {
+// Function renamed from createClassEntry to createSectionEntry
+export function createSectionEntry(db, sectionData) {
     db.run(`INSERT INTO sectionData (subjectID, classID, enroll, sectionID, status, avail, waitlist, info, day, startTime, endTime, location, units, instructor)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, sectionData);
 }
