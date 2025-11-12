@@ -70,7 +70,7 @@ export async function getClassID(term, subjectId) {
   const filterFlagsEncoded = new URLSearchParams({ FilterFlags: JSON.stringify(filterFlags) });
 
   const timestamp = Date.now();
-  let pageNum = 2;
+  let pageNum = 1;
 
 
   // Loop through paginated results

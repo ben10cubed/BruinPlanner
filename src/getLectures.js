@@ -29,6 +29,8 @@ function getCatalogStrPadded(courseID) {
 
     while (num.length < 4) num = "0" + num;
 
+    if (suffix.length === 0) suffix = " ";
+
     return (num + suffix + " " + prefix).padEnd(8, " ");
 }
 
