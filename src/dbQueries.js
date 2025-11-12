@@ -47,15 +47,31 @@ export function createSubjectEntry(db, subjectData) {
     db.run(`INSERT INTO subjectData (subjectID, subjectName) VALUES (?, ?);`, subjectData);
 }
 
-// Function renamed from createSubjectClassEntry to createClassEntry
+// Create data entry into classData table
 export function createClassEntry(db, classData) {
-    db.run(`INSERT INTO classData (subjectID, classID, className) VALUES (?, ?, ?);`, classData);
+    db.run(`INSERT INTO classData (subjectID, classID, className) VALUES (?, ?, ?)
+        ON CONFLICT(subjectID, classID)
+        DO UPDATE SET
+        className = excluded.className;`, classData);
 }
 
-// Function renamed from createClassEntry to createSectionEntry
+// Create data entry into sectionData table
 export function createSectionEntry(db, sectionData) {
     db.run(`INSERT INTO sectionData (subjectID, classID, enroll, sectionID, status, avail, waitlist, info, day, startTime, endTime, location, units, instructor)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, sectionData);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(subjectID, classID, sectionID)
+            DO UPDATE SET
+            enroll = excluded.enroll,
+            status = excluded.status,
+            avail = excluded.avail,
+            waitlist = excluded.waitlist,
+            info = excluded.info,
+            day = excluded.day,
+            startTime = excluded.startTime,
+            endTime = excluded.endTime,
+            location = excluded.location,
+            units = excluded.units,
+            instructor = excluded.instructor;`, sectionData);
 }
 
 // Refactored helper function for retrieving table data (getter functions)
