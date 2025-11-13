@@ -13,8 +13,8 @@ async function main() {
   const term = "26W";
 
   // 🔹 Manually set your subject ID and class ID here
-  const subjectID = "STATS";    // e.g. "COM SCI", "EC ENGR", etc.
-  const classID = "CM248";         // e.g. "0031", "0152A", etc.
+  const subjectID = "ARCH&UD";    // e.g. "COM SCI", "EC ENGR", etc.
+  const classID = "412";         // e.g. "0031", "0152A", etc.
 
   console.log(`Fetching course data for ${subjectID} ${classID} (${term})`);
 

@@ -1,4 +1,6 @@
 //Takes in HTML file that contains class/discussion information and scrapes for desired data.
+import he from "he";
+
 //Do we still need the subjectID, classID params?
 export function getClassData(classHTML, subjectID, classID) {
     const regexPatterns = [
@@ -6,10 +8,11 @@ export function getClassData(classHTML, subjectID, classID) {
         
         new RegExp("sectionColumn[^>]*>([^<>]*<[^>]*>){6}\\s*(?<data>[^<]*)<span", "g"),
 
-        //Fixed
-        new RegExp('statusColumn[^>]*>[\\s\\S]*?<p[^>]*>[\\s\\S]*?<br\\s*\\/?>(?<data>[\\s\\S]*?)<\\/p>', 'gi'),
-        
-        new RegExp('<div class="statusColumn"[^>]*>.*?</i>\\s*(?<data>[^<]+)', 'g'), 
+        //Big modification
+        //I grouped the statuses
+        //Previous we had 2 of 5 enrolled, waitlist together, and then Open/Closed separately
+        //Instead, group them together, we will probably have to split this up when storing in DB.
+        new RegExp('<div\\s+class="statusColumn"([^>]*?)>\\s*<p[^>]*>(?<data>[\\s\\S]*?)<\\/p>\\s*<\\/div>','gi'),
         
         new RegExp("waitlistColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
         
@@ -30,47 +33,36 @@ export function getClassData(classHTML, subjectID, classID) {
         //Fixed, hard code 11 could be better fixed in the future
         new RegExp("instructorColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*([^<>]*<[^>]*>){0,11}[^<]*)</p>", "g")
     ];
+
     // Create separate replacement characters for time calculation and storing in database
     const brReplacementChar = "|";
     const brReplacementCharForTime = "-";
     const regexRemoveBreaks = new RegExp("<w?br\\s*/?>", "g");
     const regexTimeCleanup = new RegExp(`^(?<startHour>[0-9]{1,2})(?<startMinutes>(:[0-9]{2})?)(?<startDayPart>(a|p)m)${brReplacementCharForTime}-(?<endHour>[0-9]{1,2})(?<endMinutes>(:[0-9]{2})?)(?<endDayPart>(a|p)m)$`);
-    const indexTimeColumn = 7; // Index of time column in allMatches array (later in code)
+    const indexTimeColumn = 6; // Index of time column in allMatches array (later in code)
     
     // Retrieve all matches from each pattern into allMatches. This matches the form [enrollMatches[], sectionMatches[], ...]
     let allMatches = [];
     for (let i = 0; i < regexPatterns.length; i++) {
         let patternMatches = [];
         if (i === indexTimeColumn) {
-            /*
-            for (const match of classHTML.matchAll(regexPatterns[i])) {
-                let timeSlot = match.groups.data.replace(regexRemoveBreaks, brReplacementCharForTime).match(regexTimeCleanup);
-                let startTime = convertTo24Hour(timeSlot.groups.startHour, timeSlot.groups.startMinutes.slice(1), timeSlot.groups.startDayPart); // Convert time to 24hr format
-                patternMatches.push(startTime);
-            }
-            allMatches.push(patternMatches); // Push start times to allMatches
-            patternMatches = []; // Reset patternMatches for end times
-            for (const match of classHTML.matchAll(regexPatterns[i])) {
-                let timeSlot = match.groups.data.replace(regexRemoveBreaks, brReplacementCharForTime).match(regexTimeCleanup);
-                let endTime = convertTo24Hour(timeSlot.groups.endHour, timeSlot.groups.endMinutes.slice(1), timeSlot.groups.endDayPart); // Convert time to 24hr format
-                patternMatches.push(endTime);
-            }
-            */
-            // Xaver: Convert time to 24H format
+            // Xaver: Convert time to 24H format (currently just formatting text)
 
             for (const m of classHTML.matchAll(regexPatterns[i])) {
-                let timeData = m.groups.data
-                .replace(/<wbr\s*\/?>/gi, '')   // remove <wbr>
-                .replace(/<br\s*\/?>/gi, '|')   // convert <br> to '|'
-                .replace(/\s+/g, ' ')           // normalize spaces
-                .trim();
+                let timeData = he.decode(
+                    m.groups.data
+                        .replace(/<wbr\s*\/?>/gi, '')   // remove <wbr>
+                        .replace(/<br\s*\/?>/gi, '|')   // convert <br> to '|'
+                        .replace(/\s+/g, ' ')           // normalize spaces
+                        .trim()
+                );
 
-                //Case 2: detect "Not scheduled"
+                // Case 2: detect "Not scheduled"
                 if (!timeData && />Not\s*scheduled</i.test(m[0])) {
                     timeData = 'Not scheduled';
                 }
 
-                //Case 3: no time or schedule text at all
+                // Case 3: no time or schedule text at all
                 if (!timeData) {
                     timeData = 'No time scheduled';
                 }
@@ -78,26 +70,28 @@ export function getClassData(classHTML, subjectID, classID) {
                 patternMatches.push(timeData); 
             }
 
-        } else if (i == 8) { // locationColumn needs special handling for buttons and multiple locations
+        } else if (i == 7) { // locationColumn needs special handling for buttons and multiple locations
             for (const m of classHTML.matchAll(regexPatterns[i])) {
-                // Case 1: Online
-                let trimmed_data = m.groups.data.trim();
+                // Case 1: Online / button popover
+                let trimmed_data = he.decode(m.groups.data.trim());
                 if (trimmed_data.includes("button")) {
                     const subMatch = trimmed_data.match(/<button[^>]*>\s*([^<]+?)\s*<\/button>/i);
-                    const text = subMatch ? subMatch[1].trim() : null;
+                    const text = subMatch ? he.decode(subMatch[1].trim()) : null;
                     patternMatches.push(text);
                 } else {
-                    const cleaned = trimmed_data
-                    .replace(/<br\s*\/?>/gi, "|")   // turn <br> into pipe
-                    .replace(/\s*\|\s*/g, "|")      // remove spaces around all pipes
-                    .replace(/\s+/g, " ")           // collapse remaining multiple spaces
-                    .trim();
+                    const cleaned = he.decode(
+                        trimmed_data
+                            .replace(/<br\s*\/?>/gi, "|")   // turn <br> into pipe
+                            .replace(/\s*\|\s*/g, "|")      // remove spaces around all pipes
+                            .replace(/\s+/g, " ")           // collapse remaining multiple spaces
+                            .trim()
+                    );
                     patternMatches.push(cleaned);
                 }
             }
-        } else if (i == 6) { //dayColumn
+        } else if (i == 5) { // dayColumn
             for (const m of classHTML.matchAll(regexPatterns[i])) {
-                let trimmed_data = m.groups.data.trim();
+                let trimmed_data = he.decode(m.groups.data.trim());
 
                 // Case 1: Explicit "Not scheduled"
                 if (/not\s+scheduled/i.test(trimmed_data)) {
@@ -110,11 +104,13 @@ export function getClassData(classHTML, subjectID, classID) {
 
                     const subMatch = trimmed_data.match(/<button[^>]*>([\s\S]*?)<\/button>/i);
                     if (subMatch) {
-                        let text = subMatch[1]
-                            .replace(/<br\s*\/?>/gi, "|")   // convert <br> to |
-                            .replace(/\s*\|\s*/g, "|")      // clean spacing around |
-                            .replace(/\s+/g, " ")           // collapse multiple spaces
-                            .trim();
+                        let text = he.decode(
+                            subMatch[1]
+                                .replace(/<br\s*\/?>/gi, "|")   // convert <br> to |
+                                .replace(/\s*\|\s*/g, "|")      // clean spacing around |
+                                .replace(/\s+/g, " ")           // collapse multiple spaces
+                                .trim()
+                        );
 
                         patternMatches.push(text);
                     } else {
@@ -127,22 +123,27 @@ export function getClassData(classHTML, subjectID, classID) {
                     patternMatches.push("Not scheduled");
                 }
             }
-        } else if (i == 2) { //Status
+        } else if (i == 2) { // Status
             for (const m of classHTML.matchAll(regexPatterns[i])) {
+                const inner = m.groups.data;
 
-                let raw = m.groups.data.trim();
+                const textPieces = [...inner.matchAll(/>([^<>]+)</g)]
+                    .map(x => he.decode(x[1].trim()))
+                    .filter(x => x.length > 0);
 
-                let cleaned = raw
-                    .replace(/<br\s*\/?>/gi, "|")  // convert <br> to |
-                    .replace(/\s*\|\s*/g, "|")     // normalize pipe spacing
-                    .replace(/\s+/g, " ")          // collapse extra spaces
-                    .trim();
+                const cleaned = textPieces.join("|");
 
                 patternMatches.push(cleaned);
             }
         } else {
             for (const match of classHTML.matchAll(regexPatterns[i])) {
-                patternMatches.push(match.groups.data.replace(regexRemoveBreaks, brReplacementChar).trim());
+                patternMatches.push(
+                    he.decode(
+                        match.groups.data
+                            .replace(regexRemoveBreaks, brReplacementChar)
+                            .trim()
+                    )
+                );
             }
         }
         allMatches.push(patternMatches);
@@ -170,7 +171,6 @@ export function getClassData(classHTML, subjectID, classID) {
     }
 
     // Convert allMatches into allClassData by flipping rows/columns of the 2d array
-    // Original code was bugged.
     const rotated = Array.from({ length: maxLength }, (_, row) =>
         allMatches.map(col => col[row])
     );
