@@ -4,8 +4,8 @@ import { fetchCourse } from "./getLectures.js";   // ← update path if necessar
 
 async function test() {
 
-    const subject = "COM SCI";     // Subject code (as it appears online, e.g. "COM SCI")
-    const courseID = "M51A";     // Course number
+    const subject = "STATS";     // Subject code (as it appears online, e.g. "COM SCI")
+    const courseID = "CM248";     // Course number
     const term = "26W";         // UCLA term code (e.g., "26W")
 
     console.log(`Fetching course info for: ${subject} ${courseID}, term ${term}`);
