@@ -1,11 +1,8 @@
-import { readFileSync } from "node:fs";
-
-import { getSubjectID } from "./getSubjectID.js";
-import { getClassID } from "./getClassID.js";
-import { getClassData } from "./getClassData.js";
-import { fetchCourse } from "./getLectures.js"; 
-import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionStartTime, getSectionEndTime, getSectionAvail, getClasses, getSections, createClassEntry, testa } from "./dbQueries.js";
-import { get } from "node:http";
+import { getSubjectID } from "../getSubjectID.js";
+import { getClassID } from "../getClassID.js";
+import { getClassData } from "../getClassData.js";
+import { fetchCourse } from "../getLectures.js"; 
+import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionStartTime, getSectionEndTime, getSectionAvail, getClasses, getSections, createClassEntry, testa } from "../dbQueries.js";
 
 
 function getRandomInt(min, max) {

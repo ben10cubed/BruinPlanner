@@ -86,7 +86,7 @@ export async function getClassID(term, subjectId) {
   const filterFlags = {
     enrollment_status: "O,W,C,X,T,S",
     advanced: "y",
-    meet_days: "M,T,W,R,F",
+    meet_days: "M,T,W,R,F,S,U",
     start_time: "8:00 am",
     end_time: "10:00 pm",
   };

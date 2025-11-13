@@ -1,30 +1,33 @@
 //Takes in HTML file that contains class/discussion information and scrapes for desired data.
+//Do we still need the subjectID, classID params?
 export function getClassData(classHTML, subjectID, classID) {
-    const urlBase = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
     const regexPatterns = [
         new RegExp("enrollColumn[^>]*>([^<>]*<[^>]*>){2}Select (?<data>[^<]*)</label>", "g"), 
+        
         new RegExp("sectionColumn[^>]*>([^<>]*<[^>]*>){6}\\s*(?<data>[^<]*)<span", "g"),
 
-        //This works if class isn't closed, otherwise it returns undefined, which is fine imo
-        //If class is closed, we don't really need the data anyways
-        new RegExp("statusColumn[^>]*>([^<>]*<[^>]*>){3}\\s*[^<]*<br( /)?>(?<data>[^<]*(<br( /)?>[^<]*)*)</p>", "g"),
+        //Fixed
+        new RegExp('statusColumn[^>]*>[\\s\\S]*?<p[^>]*>[\\s\\S]*?<br\\s*\\/?>(?<data>[\\s\\S]*?)<\\/p>', 'gi'),
+        
         new RegExp('<div class="statusColumn"[^>]*>.*?</i>\\s*(?<data>[^<]+)', 'g'), 
+        
         new RegExp("waitlistColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
+        
         new RegExp("infoColumn[^>]*>([^<>]*<[^>]*>){4}\\s*(?<data>[^<]*)</span>", "g"), 
-        //Need to be able to get multiple lines of days
-        //Different days can have different times
-        new RegExp("dayColumn[^>]*>([^<>]*<[^>]*>){3}\\s*(?<data>[^<]*)</button>", "g"), 
+        
+        //Fixed. TODO: Based on Oliver request, even if same time across different days, split it up ie MW|F -> M|W|F
+        new RegExp('dayColumn[\\s\\S]*?<div[^>]*?days_data[^>]*?>[\\s\\S]*?<p[^>]*>(?<data>[\\s\\S]*?)<\\/p>','gi'), 
 
-        //@Xavier you probably need to do a check before calculating the time. Sometimes when time is online, it gets messed up
-        //I haven't been able to reproduce this bug, but it happened once before
-        new RegExp("timeColumn[^>]*>([^<>]*<[^>]*>){7}\\s*(?<data>[^<]*<wbr( /)?>[^<]*)</p>", "g"), 
+        //Same as above todo
+        new RegExp('timeColumn[^>]*>[\\s\\S]*?<\\/div>\\s*<p[^>]*>(?<data>[\\s\\S]*?)<\\/p>','gi'), 
 
-        //Need to be able to get Online -> Different types of Online. Online Online - Asynchronous   Online - Recorded
-        //I made a small change to the regex to allow for commas in location. Some of the locations have commas in them
-        //Fixed bug with multiple locations; as well as handle online cases properly
+        //Fixed
         new RegExp('locationColumn[^>]*>\\s*<p[^>]*>(?:(?<data>[\\s\\S]*?))\\s*</p>', 'gi'), 
+
+        //No bugs detected
         new RegExp("unitsColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
-        //This is pretty much fixed now, which is good
+
+        //Fixed, hard code 11 could be better fixed in the future
         new RegExp("instructorColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*([^<>]*<[^>]*>){0,11}[^<]*)</p>", "g")
     ];
     // Create separate replacement characters for time calculation and storing in database
@@ -38,7 +41,8 @@ export function getClassData(classHTML, subjectID, classID) {
     let allMatches = [];
     for (let i = 0; i < regexPatterns.length; i++) {
         let patternMatches = [];
-        if (i === indexTimeColumn){ // Retrieve start/end times from timeColumn
+        if (i === indexTimeColumn) {
+            /*
             for (const match of classHTML.matchAll(regexPatterns[i])) {
                 let timeSlot = match.groups.data.replace(regexRemoveBreaks, brReplacementCharForTime).match(regexTimeCleanup);
                 let startTime = convertTo24Hour(timeSlot.groups.startHour, timeSlot.groups.startMinutes.slice(1), timeSlot.groups.startDayPart); // Convert time to 24hr format
@@ -51,6 +55,29 @@ export function getClassData(classHTML, subjectID, classID) {
                 let endTime = convertTo24Hour(timeSlot.groups.endHour, timeSlot.groups.endMinutes.slice(1), timeSlot.groups.endDayPart); // Convert time to 24hr format
                 patternMatches.push(endTime);
             }
+            */
+            // Xaver: Convert time to 24H format
+
+            for (const m of classHTML.matchAll(regexPatterns[i])) {
+                let timeData = m.groups.data
+                .replace(/<wbr\s*\/?>/gi, '')   // remove <wbr>
+                .replace(/<br\s*\/?>/gi, '|')   // convert <br> to '|'
+                .replace(/\s+/g, ' ')           // normalize spaces
+                .trim();
+
+                //Case 2: detect "Not scheduled"
+                if (!timeData && />Not\s*scheduled</i.test(m[0])) {
+                    timeData = 'Not scheduled';
+                }
+
+                //Case 3: no time or schedule text at all
+                if (!timeData) {
+                    timeData = 'No time scheduled';
+                }
+
+                patternMatches.push(timeData); 
+            }
+
         } else if (i == 8) { // locationColumn needs special handling for buttons and multiple locations
             for (const m of classHTML.matchAll(regexPatterns[i])) {
                 // Case 1: Online
@@ -61,12 +88,57 @@ export function getClassData(classHTML, subjectID, classID) {
                     patternMatches.push(text);
                 } else {
                     const cleaned = trimmed_data
-                    .replace(/<br\s*\/?>/gi, "-")   // turn <br> into dash
-                    .replace(/\s*-\s*/g, "-")       // remove spaces around all dashes
+                    .replace(/<br\s*\/?>/gi, "|")   // turn <br> into pipe
+                    .replace(/\s*\|\s*/g, "|")      // remove spaces around all pipes
                     .replace(/\s+/g, " ")           // collapse remaining multiple spaces
                     .trim();
                     patternMatches.push(cleaned);
                 }
+            }
+        } else if (i == 6) { //dayColumn
+            for (const m of classHTML.matchAll(regexPatterns[i])) {
+                let trimmed_data = m.groups.data.trim();
+
+                // Case 1: Explicit "Not scheduled"
+                if (/not\s+scheduled/i.test(trimmed_data)) {
+                    patternMatches.push("Not scheduled");
+                    continue;
+                }
+
+                // Case 2: Contains a <button> element
+                if (trimmed_data.includes("button")) {
+
+                    const subMatch = trimmed_data.match(/<button[^>]*>([\s\S]*?)<\/button>/i);
+                    if (subMatch) {
+                        let text = subMatch[1]
+                            .replace(/<br\s*\/?>/gi, "|")   // convert <br> to |
+                            .replace(/\s*\|\s*/g, "|")      // clean spacing around |
+                            .replace(/\s+/g, " ")           // collapse multiple spaces
+                            .trim();
+
+                        patternMatches.push(text);
+                    } else {
+                        // In case nothing detected, likely means not scheduled
+                        patternMatches.push("Not scheduled");
+                    }
+
+                } else {
+                    // Case 3: No button → automatically Not scheduled
+                    patternMatches.push("Not scheduled");
+                }
+            }
+        } else if (i == 2) { //Status
+            for (const m of classHTML.matchAll(regexPatterns[i])) {
+
+                let raw = m.groups.data.trim();
+
+                let cleaned = raw
+                    .replace(/<br\s*\/?>/gi, "|")  // convert <br> to |
+                    .replace(/\s*\|\s*/g, "|")     // normalize pipe spacing
+                    .replace(/\s+/g, " ")          // collapse extra spaces
+                    .trim();
+
+                patternMatches.push(cleaned);
             }
         } else {
             for (const match of classHTML.matchAll(regexPatterns[i])) {
@@ -76,23 +148,33 @@ export function getClassData(classHTML, subjectID, classID) {
         allMatches.push(patternMatches);
     }
 
-    // Convert allMatches into allClassData by flipping rows/columns of the 2d array
-    const minLength = Math.min(...allMatches.map(patternMatchArr => patternMatchArr.length));
-    let allClassData = [];
-    for (let j = 0; j < allMatches[minLength].length; j++) {
-        let individualClassData = [subjectID, classID];
-        for (let i = 0; i < allMatches.length; i++) {
-            if (allMatches[i][j] == null){  // If a value is undefined/null, set it as an empty string
-                individualClassData.push("");
-            }
-            else{
-                individualClassData.push(allMatches[i][j]);
-            }
-            // console.log(allMatches[i][j]);
+    //Safety measure.
+    //In case some regex fails and we have non-rectangular matrix
+    //If it does fail, it'll mess up the data, but at least the format will be correct
+    let maxLength = 0;
+    for (const arr of allMatches) {
+        if (Array.isArray(arr)) {
+            maxLength = Math.max(maxLength, arr.length);
         }
-        allClassData.push(individualClassData);
     }
-    return allClassData;
+
+    // Step 2: Pad every list to match the longest length
+    for (let i = 0; i < allMatches.length; i++) {
+        if (!Array.isArray(allMatches[i])) {
+            allMatches[i] = [];
+        }
+
+        while (allMatches[i].length < maxLength) {
+            allMatches[i].push("");
+        }
+    }
+
+    // Convert allMatches into allClassData by flipping rows/columns of the 2d array
+    // Original code was bugged.
+    const rotated = Array.from({ length: maxLength }, (_, row) =>
+        allMatches.map(col => col[row])
+    );
+    return rotated;
 }
 
 // Convert 12-hour time to 24-hour time in HHMM format (string)
