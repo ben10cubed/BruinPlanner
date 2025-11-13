@@ -71,7 +71,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
         Term: term,
         SubjectAreaCode: subject_code,
         CatalogNumber: getCatalogStrPadded(course_ID),
-        IsRoot: false,
+        IsRoot: true,
         SessionGroup: "%",
         ClassNumber: lecture_num === null ? null : " 00"+String(lecture_num)+"  ",
         SequenceNumber: null,
@@ -115,7 +115,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
         "X-Requested-With": "XMLHttpRequest"
     };
 
-    // console.log("Requesting:", url);
+    console.log("Requesting:", url);
 
     try {
         const response = await fetch(url, { headers });
@@ -131,4 +131,4 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
     }
 }
 
-// console.log(await fetchCourse("COM SCI", "M152A", "26W"));
+console.log(await fetchCourse("COM SCI", "M152A", "26W"));
