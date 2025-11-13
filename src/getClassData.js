@@ -66,7 +66,12 @@ export function getClassData(classHTML, subjectID, classID) {
     for (let j = 0; j < allMatches[minLength].length; j++) {
         let individualClassData = [subjectID, classID];
         for (let i = 0; i < allMatches.length; i++) {
-            individualClassData.push(allMatches[i][j]);
+            if (allMatches[i][j] == null){  // If a value is undefined/null, set it as an empty string
+                individualClassData.push("");
+            }
+            else{
+                individualClassData.push(allMatches[i][j]);
+            }
             // console.log(allMatches[i][j]);
         }
         allClassData.push(individualClassData);
