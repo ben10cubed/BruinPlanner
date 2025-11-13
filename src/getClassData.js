@@ -26,10 +26,13 @@ export function getClassData(classHTML, subjectID, classID) {
         new RegExp("locationColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<][A-Za-z0-9 ,]*)\\s*</p>", "g"), 
         new RegExp("unitsColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
         //This is pretty much fixed now, which is good
-        new RegExp("instructorColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*([^<>]*<[^>]*>)?[^<]*)</p>", "g")
+        new RegExp("instructorColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*([^<>]*<[^>]*>){0,11}[^<]*)</p>", "g")
     ];
-    const regexRemoveBreaks = new RegExp("<w?br\\s*/?>");
-    const regexTimeCleanup = new RegExp("^(?<startHour>[0-9]{1,2})(?<startMinutes>(:[0-9]{2})?)(?<startDayPart>(a|p)m)--(?<endHour>[0-9]{1,2})(?<endMinutes>(:[0-9]{2})?)(?<endDayPart>(a|p)m)$");
+    // Create separate replacement characters for time calculation and storing in database
+    const brReplacementChar = "|";
+    const brReplacementCharForTime = "-";
+    const regexRemoveBreaks = new RegExp("<w?br\\s*/?>", "g");
+    const regexTimeCleanup = new RegExp(`^(?<startHour>[0-9]{1,2})(?<startMinutes>(:[0-9]{2})?)(?<startDayPart>(a|p)m)${brReplacementCharForTime}-(?<endHour>[0-9]{1,2})(?<endMinutes>(:[0-9]{2})?)(?<endDayPart>(a|p)m)$`);
     const indexTimeColumn = 7; // Index of time column in allMatches array (later in code)
 
     // TODO: Regex other information such as "No Waitlist, 0 of 40 Taken"
@@ -40,21 +43,21 @@ export function getClassData(classHTML, subjectID, classID) {
         let patternMatches = [];
         if (i === indexTimeColumn){ // Retrieve start/end times from timeColumn
             for (const match of classHTML.matchAll(regexPatterns[i])) {
-                let timeSlot = match.groups.data.replace(regexRemoveBreaks, "-").match(regexTimeCleanup);
+                let timeSlot = match.groups.data.replace(regexRemoveBreaks, brReplacementCharForTime).match(regexTimeCleanup);
                 let startTime = convertTo24Hour(timeSlot.groups.startHour, timeSlot.groups.startMinutes.slice(1), timeSlot.groups.startDayPart); // Convert time to 24hr format
                 patternMatches.push(startTime);
             }
             allMatches.push(patternMatches); // Push start times to allMatches
             patternMatches = []; // Reset patternMatches for end times
             for (const match of classHTML.matchAll(regexPatterns[i])) {
-                let timeSlot = match.groups.data.replace(regexRemoveBreaks, "-").match(regexTimeCleanup);
+                let timeSlot = match.groups.data.replace(regexRemoveBreaks, brReplacementCharForTime).match(regexTimeCleanup);
                 let endTime = convertTo24Hour(timeSlot.groups.endHour, timeSlot.groups.endMinutes.slice(1), timeSlot.groups.endDayPart); // Convert time to 24hr format
                 patternMatches.push(endTime);
             }
         }
         else{
             for (const match of classHTML.matchAll(regexPatterns[i])) {
-                patternMatches.push(match.groups.data.replace(regexRemoveBreaks, "-").trim());
+                patternMatches.push(match.groups.data.replace(regexRemoveBreaks, brReplacementChar).trim());
             }
         }
         allMatches.push(patternMatches);
