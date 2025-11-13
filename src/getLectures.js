@@ -44,7 +44,12 @@ function getSubjectCodeWithoutSpace(subjectCode) {
 //Technically it fails for CM248 STATS, but it does return the correct values
 //Maybe this term just doesn't affect the results
 function isMultiListed(courseID) {
-    return courseID[0] === "M" ? "y" : "n";
+    for(let i = 0; i < courseID.length; i++) {
+        if(courseID[i] == 'M') {
+            return "y";
+        }
+    }
+    return "n";
 }
 
 function getTokenStr(subjectCode, courseID) {
