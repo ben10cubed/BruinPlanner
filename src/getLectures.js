@@ -88,7 +88,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
     const FilterFlags = {
         enrollment_status: "O,W,C,X,T,S",
         advanced: "y",
-        meet_days: "M,T,W,R,F",
+        meet_days: "M,T,W,R,F,S,U",
         start_time: "8:00 am",
         end_time: "10:00 pm",
         meet_locations: null,
@@ -131,4 +131,4 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
     }
 }
 
-// console.log(await fetchCourse("COM SCI", "M152A", "26W"));
+// console.log(await fetchCourse("MGMTEX", "260B", "26W"));
