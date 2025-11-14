@@ -232,6 +232,11 @@ export function getClassData(classHTML, subjectID, classID) {
         }
     }
 
+    const subjectArr = Array(maxLength).fill(subjectID);
+    const classArr = Array(maxLength).fill(classID);
+
+    allMatches.unshift(subjectArr, classArr);
+
     // Convert allMatches into allClassData by flipping rows/columns of the 2d array
     const rotated = Array.from({ length: maxLength }, (_, row) =>
         allMatches.map(col => col[row])
