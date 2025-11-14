@@ -3,13 +3,24 @@ import he from "he";
 
 //Do we still need the subjectID, classID params?
 export function getClassData(classHTML, subjectID, classID) {
+
+    //Order of data in regex
+    const Column = Object.freeze({
+      ENROLL:     0,
+      SECTION:    1,
+      STATUS:     2,
+      WAITLIST:   3,
+      INFO:       4,
+      DAY:        5,
+      TIME:       6,
+      LOCATION:   7,
+      UNITS:      8,
+      INSTRUCTOR: 9
+    });
+
     const regexPatterns = [
         new RegExp("enrollColumn[^>]*>([^<>]*<[^>]*>){2}Select (?<data>[^<]*)</label>", "g"), 
         new RegExp("sectionColumn[^>]*>([^<>]*<[^>]*>){6}\\s*(?<data>[^<]*)<span", "g"),
-        //Big modification
-        //I grouped the statuses
-        //Previous we had 2 of 5 enrolled, waitlist together, and then Open/Closed separately
-        //Instead, group them together, we will probably have to split this up when storing in DB.
         new RegExp('<div\\s+class="statusColumn"([^>]*?)>\\s*<p[^>]*>(?<data>[\\s\\S]*?)<\\/p>\\s*<\\/div>','gi'),
         new RegExp("waitlistColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
         new RegExp("infoColumn[^>]*>([^<>]*<[^>]*>){4}\\s*(?<data>[^<]*)</span>", "g"), 
@@ -19,9 +30,7 @@ export function getClassData(classHTML, subjectID, classID) {
         new RegExp("timeColumn[^>]*>[\\s\\S]*?</div>\\s*<p[^>]*>\\s*(?<data>[\\s\\S]*?)</p>", "gi"),
         //Fixed
         new RegExp('locationColumn[^>]*>\\s*<p[^>]*>(?:(?<data>[\\s\\S]*?))\\s*</p>', 'gi'), 
-        //No bugs detected
         new RegExp("unitsColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
-        //Fixed, hard code 11 could be better fixed in the future
         new RegExp("instructorColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*([^<>]*<[^>]*>){0,11}[^<]*)</p>", "g")
     ];
     // Create separate replacement characters for time calculation and storing in database
@@ -38,7 +47,8 @@ export function getClassData(classHTML, subjectID, classID) {
     let allMatches = [];
     for (let i = 0; i < regexPatterns.length; i++) {
         let patternMatches = [];
-        if (i === indexTimeColumn) {
+        switch (i){
+            case Column.TIME:
             for (const match of classHTML.matchAll(regexPatterns[i])) {
                 let timeData = match.groups.data
                         .replace(regexWbr, '')   // remove <wbr>
@@ -55,10 +65,18 @@ export function getClassData(classHTML, subjectID, classID) {
                 }
                 patternMatches.push(timeData); 
             }
-        } else if (i == 7) { // locationColumn needs special handling for buttons and multiple locations
+            break;
+        case Column.LOCATION:
+            /*
+                There are two types of locations: Online, Physical
+                    1. Online
+                        - Has buttons inside regex
+                        - And split into Asyn Recorded and just normal Online
+                    2. Physical is just splitting by tags
+            */
             for (const m of classHTML.matchAll(regexPatterns[i])) {
-                // Case 1: Online / button popover
                 let trimmed_data = he.decode(m.groups.data.trim());
+                
                 if (trimmed_data.includes("button")) {
                     let trimmed_data = he.decode(m.groups.data.toLowerCase());
                     if (trimmed_data.includes("asynchronous")) {
@@ -81,18 +99,27 @@ export function getClassData(classHTML, subjectID, classID) {
                     patternMatches.push(cleaned);
                 }
             }
-        } else if (i == 5) { // dayColumn
+            break;
+        case Column.DAY:
+            /*
+                There are a few types of day allocation: Not Schedule, Days-of-Week, (Some weird ones, such as empty, ---)
+                    1. Not Scheduled
+                        - Detect prescence
+                    2. Days-of-Week
+                        - Different time slots split by <br>
+                    3. Rest
+                        - Group as scheduled
+            */
             for (const m of classHTML.matchAll(regexPatterns[i])) {
                 let trimmed_data = m.groups.data.trim();
 
-                // Case 1: Explicit "Not scheduled"
                 if (/not\s+scheduled/i.test(trimmed_data)) {
                     patternMatches.push("Not scheduled");
                     continue;
                 }
-                // Case 2: Contains a <button> element
-                if (trimmed_data.includes("button")) {
 
+                // Button means normal data
+                if (trimmed_data.includes("button")) {
                     const subMatch = trimmed_data.match(/<button[^>]*>([\s\S]*?)<\/button>/i);
                     if (subMatch) {
                         let text = he.decode(
@@ -105,16 +132,18 @@ export function getClassData(classHTML, subjectID, classID) {
 
                         patternMatches.push(text);
                     } else {
-                        // In case nothing detected, likely means not scheduled
                         patternMatches.push("Not scheduled");
                     }
                 } else {
-                    // Case 3: No button → automatically Not scheduled
                     patternMatches.push("Not scheduled");
                 }
             }
-        } else if (i == 2) { // Status
-            //Fix bug of not detecting last section
+            break;
+        case Column.STATUS:
+            /* 
+                There are a few types of status: Closed, Cancelled, Waitlist, Open, Tentative (This is my guess S - Suspended, hasn't shown up yet)
+                    1. Using a silly method, since formatting is pretty different. Just detect the string
+            */
             for (const m of classHTML.matchAll(regexPatterns[i])) {
                 const inner = m.groups.data;
                 const lower = inner.toLowerCase();
@@ -126,12 +155,22 @@ export function getClassData(classHTML, subjectID, classID) {
                     patternMatches.push("Cancelled");
                     continue;
                 }
+
                 if (lower.includes("waitlist")) {
                     patternMatches.push("Waitlist");
                     continue;
                 }
-                // 2. For normal cases, ensure there is a trailing '<'
-                // so that the regex >(...?)< works on the last line
+
+                if (lower.includes("tentative")) {
+                    patternMatches.push("Tentative");
+                    continue;
+                }
+
+                if (lower.includes("suspended")) {
+                    patternMatches.push("Suspended");
+                    continue;
+                }
+
                 let fixed = m.groups.data.trim();
                 if (!fixed.endsWith("<")) {
                     fixed += "<";
@@ -143,7 +182,13 @@ export function getClassData(classHTML, subjectID, classID) {
                 const cleaned = textPieces.join("|");
                 patternMatches.push(cleaned);
             }
-        } else {
+            break;
+        case Column.SECTION:
+        case Column.WAITLIST:
+        case Column.INFO:
+        case Column.UNITS:
+        case Column.INSTRUCTOR:
+        default:
             for (const match of classHTML.matchAll(regexPatterns[i])) {
                 patternMatches.push(
                     he.decode(
@@ -153,7 +198,10 @@ export function getClassData(classHTML, subjectID, classID) {
                     )
                 );
             }
+            break;
         }
+
+        //Push results of one Column into array
         allMatches.push(patternMatches);
     }
 
@@ -177,6 +225,11 @@ export function getClassData(classHTML, subjectID, classID) {
             allMatches[i].push("");
         }
     }
+
+    const subjectArr = Array(maxLength).fill(subjectID);
+    const classArr = Array(maxLength).fill(classID);
+
+    allMatches.unshift(subjectArr, classArr);
 
     // Convert allMatches into allClassData by flipping rows/columns of the 2d array
     const rotated = Array.from({ length: maxLength }, (_, row) =>
