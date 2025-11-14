@@ -36,9 +36,10 @@ export function getClassData(classHTML, subjectID, classID) {
     // Create separate replacement characters for time calculation and storing in database
     const brReplacementChar = "|";
     const brReplacementCharForTime = "-";
-    const regexRemoveBreaks = new RegExp("<w?br\\s*/?>", "g");
-    const regexWbr = new RegExp("<wbr\\s*/?>", "g");
-    const regexBr = new RegExp("<br\\s*/?>", "g")
+    const regexRemoveBreaks = new RegExp("<w?br\\s*/?>", "gi");
+    const regexWbr = new RegExp("<wbr\\s*/?>", "gi");
+    const regexBr = new RegExp("<br\\s*/?>", "gi");
+    const regexPipeSpaces = new RegExp("\\s*\\|\\s*", "gi");
     const regexTimeCleanup = new RegExp("(?<hour>[0-9]{1,2})(?<minutes>(:[0-9]{2})?)(?<dayPart>(a|p)m)", "g");
     // const regexTimeCleanup = new RegExp("(?<hour>[0-9]{1,2})(:(?<minutes>[0-9]{2}))?(?<dayPart>(a|p)m)", "g");
     const indexTimeColumn = 6; // Index of time column in allMatches array (later in code)
@@ -91,8 +92,8 @@ export function getClassData(classHTML, subjectID, classID) {
                 } else {
                     const cleaned = he.decode(
                         trimmed_data
-                            .replace(/<br\s*\/?>/gi, "|")   // turn <br> into pipe
-                            .replace(/\s*\|\s*/g, "|")      // remove spaces around all pipes
+                            .replace(regexBr, "|")   // turn <br> into pipe
+                            .replace(regexPipeSpaces, "|")      // remove spaces around all pipes
                             .replace(/\s+/g, " ")           // collapse remaining multiple spaces
                             .trim()
                     );
@@ -124,12 +125,11 @@ export function getClassData(classHTML, subjectID, classID) {
                     if (subMatch) {
                         let text = he.decode(
                             subMatch[1]
-                                .replace(/<br\s*\/?>/gi, "|")   // convert <br> to |
-                                .replace(/\s*\|\s*/g, "|")      // clean spacing around |
+                                .replace(regexBr, "|")   // convert <br> to |
+                                .replace(regexPipeSpaces, "|")      // clean spacing around |
                                 .replace(/\s+/g, " ")           // collapse multiple spaces
                                 .trim()
                         );
-
                         patternMatches.push(text);
                     } else {
                         patternMatches.push("Not scheduled");
@@ -223,6 +223,28 @@ export function getClassData(classHTML, subjectID, classID) {
 
         while (allMatches[i].length < maxLength) {
             allMatches[i].push("");
+        }
+    }
+
+    // Formats Day Column to split individual days sharing a single time
+    // Formats Time Column to match day column splits
+    for (let entry = 0; entry < allMatches[Column.DAY].length; entry++){
+        if (allMatches[Column.TIME][entry] &&
+            allMatches[Column.DAY][entry] &&
+            allMatches[Column.TIME][entry][0] != 'N' &&
+            allMatches[Column.DAY][entry][0] != 'N'){
+            let dayParts = allMatches[Column.DAY][entry].split('|');    // Splits Day Column by | into a list
+            let timeParts = allMatches[Column.TIME][entry].split('|');  // Splits Time Column by | into a list
+            let newDayString = "";
+            let newTimeString = "";
+            for (let dayPart = 0; dayPart < dayParts.length; dayPart++){    // For each part of the Day Column (split by |)
+                for(const dayChar of dayParts[dayPart]){    // For each individual day in a single day part
+                    newDayString += dayChar + "|";  // Separate each individual day by |
+                    newTimeString += timeParts[dayPart] + "|";  // For each day, split its respective time by | as well
+                }
+            }
+            allMatches[Column.DAY][entry] = newDayString.slice(0, -1);      // Update the day entry
+            allMatches[Column.TIME][entry] = newTimeString.slice(0, -1);    // Update the time entry
         }
     }
 
