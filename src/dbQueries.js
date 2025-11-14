@@ -31,8 +31,7 @@ export function initDB() {
             waitlist TEXT,
             info TEXT,
             day TEXT,
-            startTime TEXT,
-            endTime TEXT,
+            time TEXT,
             location TEXT,
             units TEXT,
             instructor TEXT,
@@ -57,8 +56,8 @@ export function createClassEntry(db, classData) {
 
 // Create data entry into sectionData table
 export function createSectionEntry(db, sectionData) {
-    db.run(`INSERT INTO sectionData (subjectID, classID, enroll, sectionID, status, avail, waitlist, info, day, startTime, endTime, location, units, instructor)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    db.run(`INSERT INTO sectionData (subjectID, classID, enroll, sectionID, status, avail, waitlist, info, day, time, location, units, instructor)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(subjectID, classID, sectionID)
             DO UPDATE SET
             enroll = excluded.enroll,
@@ -67,8 +66,7 @@ export function createSectionEntry(db, sectionData) {
             waitlist = excluded.waitlist,
             info = excluded.info,
             day = excluded.day,
-            startTime = excluded.startTime,
-            endTime = excluded.endTime,
+            time = excluded.time,
             location = excluded.location,
             units = excluded.units,
             instructor = excluded.instructor;`, sectionData);
@@ -100,7 +98,7 @@ export function testa(db) {
 
 // Return all entries for a specific subjectID and classID
 export function getClassEntries(db, subjectID, classID) {
-    const stmt = db.prepare(`SELECT enroll, sectionID, status, avail, waitlist, info, day, startTime, endTime, location, units, instructor FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}';`);
+    const stmt = db.prepare(`SELECT enroll, sectionID, status, avail, waitlist, info, day, time, location, units, instructor FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}';`);
     const results = getTable(stmt);
     return results;
 }
@@ -176,17 +174,17 @@ export function getSectionDay(db, subjectID, classID, sectionID){
     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
 }
 
-// Return start time for a specific section
-export function getSectionStartTime(db, subjectID, classID, sectionID){
-    const stmt = db.prepare(`SELECT startTime FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
+// Return time for a specific section
+export function getSectionTime(db, subjectID, classID, sectionID){
+    const stmt = db.prepare(`SELECT time FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
 }
 
-// Return end time for a specific section
-export function getSectionEndTime(db, subjectID, classID, sectionID){
-    const stmt = db.prepare(`SELECT endTime FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
-    return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
-}
+// // Return end time for a specific section
+// export function getSectionEndTime(db, subjectID, classID, sectionID){
+//     const stmt = db.prepare(`SELECT endTime FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
+//     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
+// }
 
 // Return location for a specific section
 export function getSectionLocation(db, subjectID, classID, sectionID){

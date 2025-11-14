@@ -1,13 +1,13 @@
 import { getSubjectID } from "./getSubjectID.js";
 import { getClassID } from "./getClassID.js";
 import { getClassData } from "./getClassData.js";
-import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionStartTime, getSectionEndTime, getSectionAvail, getClasses, getSections, createClassEntry, testa } from "./dbQueries.js";
+import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionTime, getSectionAvail, getClasses, getSections, createClassEntry, testa } from "./dbQueries.js";
 import { fetchCourse } from "./getLectures.js";
 
 async function main() {
     // Placeholder SubjectID, ClassID, Term
-    let sampleSubjectID = "COM SCI";
-    let sampleClassID = "33";
+    let sampleSubjectID = "TURKIC";
+    let sampleClassID = "101B";
     // Test M152A (TA thing)
     let sampleTerm = "26W";
     let sampleLecture = null;
@@ -23,8 +23,8 @@ async function main() {
     // Get the data for the sample subject + class + lecture (all discussion data)
     const allClassData = await getClassData(classHTML, sampleSubjectID, sampleClassID);
     console.log("Class Data Retrieved")
-    console.log(classHTML);
-    console.log(allClassData);
+    // console.log(classHTML);
+    // console.log(allClassData);
 
     // Initialize DB and input data
     initDB().then(db => {
@@ -38,8 +38,8 @@ async function main() {
             createSectionEntry(db, allClassData[i]);
         }
         // console.log("Data input into database.");
-        // console.log("Fetch all entries in all tables:");
-        // console.log(getAllEntries(db));
+        console.log("Fetch all entries in all tables:");
+        console.log(getAllEntries(db));
         // console.log("Fetch data for COM SCI 35L sections:");
         // console.log(getClassEntries(db, "COM SCI", "35L"));
         // console.log("Fetch all classes for COM SCI:");
