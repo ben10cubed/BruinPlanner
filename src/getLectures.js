@@ -130,6 +130,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
         const response = await fetch(url, { headers });
         const text = await response.text();
 
+        if (response.status == 529) return null;
         console.log("Status:", response.status);
 
         // Return the HTML text instead of saving it
