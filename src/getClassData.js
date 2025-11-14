@@ -75,9 +75,16 @@ export function getClassData(classHTML, subjectID, classID) {
                 // Case 1: Online / button popover
                 let trimmed_data = he.decode(m.groups.data.trim());
                 if (trimmed_data.includes("button")) {
-                    const subMatch = trimmed_data.match(/<button[^>]*>\s*([^<]+?)\s*<\/button>/i);
-                    const text = subMatch ? he.decode(subMatch[1].trim()) : null;
-                    patternMatches.push(text);
+                    let trimmed_data = he.decode(m.groups.data.toLowerCase());
+                    if (trimmed_data.includes("asynchronous")) {
+                        patternMatches.push("Online - Asynchronous");
+                    } 
+                    else if (trimmed_data.includes("recorded")) {
+                        patternMatches.push("Online - Recorded");
+                    } 
+                    else {
+                        patternMatches.push("Online");
+                    }
                 } else {
                     const cleaned = he.decode(
                         trimmed_data
@@ -91,7 +98,7 @@ export function getClassData(classHTML, subjectID, classID) {
             }
         } else if (i == 5) { // dayColumn
             for (const m of classHTML.matchAll(regexPatterns[i])) {
-                let trimmed_data = he.decode(m.groups.data.trim());
+                let trimmed_data = m.groups.data.trim();
 
                 // Case 1: Explicit "Not scheduled"
                 if (/not\s+scheduled/i.test(trimmed_data)) {
@@ -124,10 +131,29 @@ export function getClassData(classHTML, subjectID, classID) {
                 }
             }
         } else if (i == 2) { // Status
-            for (const m of classHTML.matchAll(regexPatterns[i])) {
-                const inner = m.groups.data;
 
-                const textPieces = [...inner.matchAll(/>([^<>]+)</g)]
+            //Fix bug of not detecting last section
+            for (const m of classHTML.matchAll(regexPatterns[i])) {
+                
+                const inner = m.groups.data;
+                const lower = inner.toLowerCase();
+                if (lower.includes("cancelled")) {
+                    patternMatches.push("Cancelled");
+                    continue;
+                }
+                if (lower.includes("waitlist")) {
+                    patternMatches.push("Waitlist");
+                    continue;
+                }
+
+                // 2. For normal cases, ensure there is a trailing '<'
+                // so that the regex >(...?)< works on the last line
+                let fixed = m.groups.data.trim();
+                if (!fixed.endsWith("<")) {
+                    fixed += "<";
+                }
+                
+                const textPieces = [...fixed.matchAll(/>([^<>]+)</g)]
                     .map(x => he.decode(x[1].trim()))
                     .filter(x => x.length > 0);
 
