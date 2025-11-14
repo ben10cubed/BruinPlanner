@@ -176,15 +176,9 @@ export function getSectionDay(db, subjectID, classID, sectionID){
     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
 }
 
-// Return start time for a specific section
-export function getSectionStartTime(db, subjectID, classID, sectionID){
-    const stmt = db.prepare(`SELECT startTime FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
-    return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
-}
-
-// Return end time for a specific section
-export function getSectionEndTime(db, subjectID, classID, sectionID){
-    const stmt = db.prepare(`SELECT endTime FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
+// Return time for a specific section
+export function getSectionTime(db, subjectID, classID, sectionID){
+    const stmt = db.prepare(`SELECT time FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
 }
 
