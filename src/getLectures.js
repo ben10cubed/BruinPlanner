@@ -20,6 +20,10 @@ function getCatalogStr(courseID) {
 //Prefix and suffix can both be up to two characters long
 //Then pad each of those up to 2 characters
 function getCatalogStrPadded(courseID) {
+    //Special case scenario
+    if (courseID === 'A') {
+        return '0000A   ';
+    }
     let index1 = 0;
     while (index1 < courseID.length && /[A-Za-z]/.test(courseID[index1])) index1++;
 
