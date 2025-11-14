@@ -5,40 +5,33 @@ import he from "he";
 export function getClassData(classHTML, subjectID, classID) {
     const regexPatterns = [
         new RegExp("enrollColumn[^>]*>([^<>]*<[^>]*>){2}Select (?<data>[^<]*)</label>", "g"), 
-        
         new RegExp("sectionColumn[^>]*>([^<>]*<[^>]*>){6}\\s*(?<data>[^<]*)<span", "g"),
-
         //Big modification
         //I grouped the statuses
         //Previous we had 2 of 5 enrolled, waitlist together, and then Open/Closed separately
         //Instead, group them together, we will probably have to split this up when storing in DB.
         new RegExp('<div\\s+class="statusColumn"([^>]*?)>\\s*<p[^>]*>(?<data>[\\s\\S]*?)<\\/p>\\s*<\\/div>','gi'),
-        
         new RegExp("waitlistColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
-        
         new RegExp("infoColumn[^>]*>([^<>]*<[^>]*>){4}\\s*(?<data>[^<]*)</span>", "g"), 
-        
         //Fixed. TODO: Based on Oliver request, even if same time across different days, split it up ie MW|F -> M|W|F
         new RegExp('dayColumn[\\s\\S]*?<div[^>]*?days_data[^>]*?>[\\s\\S]*?<p[^>]*>(?<data>[\\s\\S]*?)<\\/p>','gi'), 
-
         //Same as above todo
-        new RegExp('timeColumn[^>]*>[\\s\\S]*?<\\/div>\\s*<p[^>]*>(?<data>[\\s\\S]*?)<\\/p>','gi'), 
-
+        new RegExp("timeColumn[^>]*>[\\s\\S]*?</div>\\s*<p[^>]*>\\s*(?<data>[\\s\\S]*?)</p>", "gi"),
         //Fixed
         new RegExp('locationColumn[^>]*>\\s*<p[^>]*>(?:(?<data>[\\s\\S]*?))\\s*</p>', 'gi'), 
-
         //No bugs detected
         new RegExp("unitsColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*)</p>", "g"), 
-
         //Fixed, hard code 11 could be better fixed in the future
         new RegExp("instructorColumn[^>]*>([^<>]*<[^>]*>){1}\\s*(?<data>[^<]*([^<>]*<[^>]*>){0,11}[^<]*)</p>", "g")
     ];
-
     // Create separate replacement characters for time calculation and storing in database
     const brReplacementChar = "|";
     const brReplacementCharForTime = "-";
     const regexRemoveBreaks = new RegExp("<w?br\\s*/?>", "g");
-    const regexTimeCleanup = new RegExp(`^(?<startHour>[0-9]{1,2})(?<startMinutes>(:[0-9]{2})?)(?<startDayPart>(a|p)m)${brReplacementCharForTime}-(?<endHour>[0-9]{1,2})(?<endMinutes>(:[0-9]{2})?)(?<endDayPart>(a|p)m)$`);
+    const regexWbr = new RegExp("<wbr\\s*/?>", "g");
+    const regexBr = new RegExp("<br\\s*/?>", "g")
+    const regexTimeCleanup = new RegExp("(?<hour>[0-9]{1,2})(?<minutes>(:[0-9]{2})?)(?<dayPart>(a|p)m)", "g");
+    // const regexTimeCleanup = new RegExp("(?<hour>[0-9]{1,2})(:(?<minutes>[0-9]{2}))?(?<dayPart>(a|p)m)", "g");
     const indexTimeColumn = 6; // Index of time column in allMatches array (later in code)
     
     // Retrieve all matches from each pattern into allMatches. This matches the form [enrollMatches[], sectionMatches[], ...]
@@ -46,30 +39,22 @@ export function getClassData(classHTML, subjectID, classID) {
     for (let i = 0; i < regexPatterns.length; i++) {
         let patternMatches = [];
         if (i === indexTimeColumn) {
-            // Xaver: Convert time to 24H format (currently just formatting text)
-
-            for (const m of classHTML.matchAll(regexPatterns[i])) {
-                let timeData = he.decode(
-                    m.groups.data
-                        .replace(/<wbr\s*\/?>/gi, '')   // remove <wbr>
-                        .replace(/<br\s*\/?>/gi, '|')   // convert <br> to '|'
-                        .replace(/\s+/g, ' ')           // normalize spaces
-                        .trim()
-                );
-
+            for (const match of classHTML.matchAll(regexPatterns[i])) {
+                let timeData = match.groups.data
+                        .replace(regexWbr, '')   // remove <wbr>
+                        .replace(regexBr, '|')   // convert <br> to '|'
+                        .replace(/\s+/g, '')           // remove spaces
+                        .replace(regexTimeCleanup, convertTo24Hour);    // convert to 24 hour time format
                 // Case 2: detect "Not scheduled"
                 if (!timeData && />Not\s*scheduled</i.test(m[0])) {
                     timeData = 'Not scheduled';
                 }
-
                 // Case 3: no time or schedule text at all
                 if (!timeData) {
                     timeData = 'No time scheduled';
                 }
-
                 patternMatches.push(timeData); 
             }
-
         } else if (i == 7) { // locationColumn needs special handling for buttons and multiple locations
             for (const m of classHTML.matchAll(regexPatterns[i])) {
                 // Case 1: Online / button popover
@@ -105,7 +90,6 @@ export function getClassData(classHTML, subjectID, classID) {
                     patternMatches.push("Not scheduled");
                     continue;
                 }
-
                 // Case 2: Contains a <button> element
                 if (trimmed_data.includes("button")) {
 
@@ -124,17 +108,14 @@ export function getClassData(classHTML, subjectID, classID) {
                         // In case nothing detected, likely means not scheduled
                         patternMatches.push("Not scheduled");
                     }
-
                 } else {
                     // Case 3: No button → automatically Not scheduled
                     patternMatches.push("Not scheduled");
                 }
             }
         } else if (i == 2) { // Status
-
             //Fix bug of not detecting last section
             for (const m of classHTML.matchAll(regexPatterns[i])) {
-                
                 const inner = m.groups.data;
                 const lower = inner.toLowerCase();
                 if (lower.includes("closed by dept")) {
@@ -149,20 +130,17 @@ export function getClassData(classHTML, subjectID, classID) {
                     patternMatches.push("Waitlist");
                     continue;
                 }
-
                 // 2. For normal cases, ensure there is a trailing '<'
                 // so that the regex >(...?)< works on the last line
                 let fixed = m.groups.data.trim();
                 if (!fixed.endsWith("<")) {
                     fixed += "<";
                 }
-
                 const textPieces = [...fixed.matchAll(/>([^<>]+)</g)]
                     .map(x => he.decode(x[1].trim()))
                     .filter(x => x.length > 0);
 
                 const cleaned = textPieces.join("|");
-
                 patternMatches.push(cleaned);
             }
         } else {
@@ -208,7 +186,8 @@ export function getClassData(classHTML, subjectID, classID) {
 }
 
 // Convert 12-hour time to 24-hour time in HHMM format (string)
-function convertTo24Hour(hour, minutes, dayPart) {
+function convertTo24Hour(timeString, hour, minutes, dayPart) {
+    minutes = minutes.slice(1)
     let convertedTime = parseInt(hour) * 100;
     if (dayPart === "pm"){
         if (convertedTime !== 1200){
