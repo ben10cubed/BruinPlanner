@@ -137,6 +137,10 @@ export function getClassData(classHTML, subjectID, classID) {
                 
                 const inner = m.groups.data;
                 const lower = inner.toLowerCase();
+                if (lower.includes("closed by dept")) {
+                    patternMatches.push("Closed by Dept");
+                    continue;
+                }
                 if (lower.includes("cancelled")) {
                     patternMatches.push("Cancelled");
                     continue;
@@ -152,7 +156,7 @@ export function getClassData(classHTML, subjectID, classID) {
                 if (!fixed.endsWith("<")) {
                     fixed += "<";
                 }
-                
+
                 const textPieces = [...fixed.matchAll(/>([^<>]+)</g)]
                     .map(x => he.decode(x[1].trim()))
                     .filter(x => x.length > 0);
