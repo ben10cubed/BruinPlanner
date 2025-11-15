@@ -180,12 +180,6 @@ export function getSectionTime(db, subjectID, classID, sectionID){
     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
 }
 
-// // Return end time for a specific section
-// export function getSectionEndTime(db, subjectID, classID, sectionID){
-//     const stmt = db.prepare(`SELECT endTime FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
-//     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
-// }
-
 // Return location for a specific section
 export function getSectionLocation(db, subjectID, classID, sectionID){
     const stmt = db.prepare(`SELECT location FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);

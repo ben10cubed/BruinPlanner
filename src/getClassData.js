@@ -57,7 +57,7 @@ export function getClassData(classHTML, subjectID, classID) {
                         .replace(/\s+/g, '')           // remove spaces
                         .replace(regexTimeCleanup, convertTo24Hour);    // convert to 24 hour time format
                 // Case 2: detect "Not scheduled"
-                if (!timeData && />Not\s*scheduled</i.test(m[0])) {
+                if (!timeData && />Not\s*scheduled</i.test(match[0])) {
                     timeData = 'Not scheduled';
                 }
                 // Case 3: no time or schedule text at all
