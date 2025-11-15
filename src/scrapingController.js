@@ -6,11 +6,11 @@ import { fetchCourse } from "./getLectures.js";
 
 async function main() {
     // Placeholder SubjectID, ClassID, Term
-    let sampleSubjectID = "PHILOS";
-    let sampleClassID = "22W";
+    let sampleSubjectID = "MATH";
+    let sampleClassID = "164";
     // Test M152A (TA thing)
     let sampleTerm = "26W";
-    let sampleLecture = null;
+    let sampleLecture = 2;
 
     //Scrapes all of subject IDs
     const subjectID = await getSubjectID(sampleTerm);
@@ -57,9 +57,9 @@ async function main() {
         // console.log("Fetch COM SCI 35L Dis 1A end time: ");
         // console.log(getSectionEndTime(db, "COM SCI", "35L", "Dis 1A"));
         console.log("Fetch section avail: ");
-        console.log(getSectionAvail(db, sampleSubjectID, sampleClassID, "Lec 1"));
+        console.log(getSectionAvail(db, sampleSubjectID, sampleClassID, "Dis 2B"));
         console.log("Fetch section status: ");
-        console.log(getSectionStatus(db, sampleSubjectID, sampleClassID, "Lec 1"));
+        console.log(getSectionStatus(db, sampleSubjectID, sampleClassID, "Dis 2B"));
         // console.log(testa(db));
     });
 }

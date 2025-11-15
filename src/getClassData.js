@@ -40,7 +40,7 @@ export function getClassData(classHTML, subjectID, classID) {
     const regexWbr = new RegExp("<wbr\\s*/?>", "gi");
     const regexBr = new RegExp("<br\\s*/?>", "gi");
     const regexPipeSpaces = new RegExp("\\s*\\|\\s*", "gi");
-    const regexTimeCleanup = new RegExp("(?<hour>[0-9]{1,2})(?<minutes>(:[0-9]{2})?)(?<dayPart>(a|p)m)", "g");
+    const regexTimeCleanup = new RegExp("(?<hour>[0-9]{1,2})(?<minutes>:[0-9]{2})?(?<dayPart>[ap]m)", "g");
     // const regexTimeCleanup = new RegExp("(?<hour>[0-9]{1,2})(:(?<minutes>[0-9]{2}))?(?<dayPart>(a|p)m)", "g");
     const indexTimeColumn = 6; // Index of time column in allMatches array (later in code)
     
@@ -262,7 +262,9 @@ export function getClassData(classHTML, subjectID, classID) {
 
 // Convert 12-hour time to 24-hour time in HHMM format (string)
 function convertTo24Hour(timeString, hour, minutes, dayPart) {
-    minutes = minutes.slice(1)
+    if (minutes){
+        minutes = minutes.slice(1);
+    }
     let convertedTime = parseInt(hour) * 100;
     if (dayPart === "pm"){
         if (convertedTime !== 1200){
