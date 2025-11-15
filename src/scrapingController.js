@@ -1,13 +1,13 @@
 import { getSubjectID } from "./getSubjectID.js";
 import { getClassID } from "./getClassID.js";
 import { getClassData } from "./getClassData.js";
-import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionTime, getSectionAvail, getClasses, getSections, createClassEntry, testa } from "./dbQueries.js";
+import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionTime, getClasses, getSections, createClassEntry, testa } from "./dbQueries.js";
 import { fetchCourse } from "./getLectures.js";
 
 async function main() {
     // Placeholder SubjectID, ClassID, Term
-    let sampleSubjectID = "TURKIC";
-    let sampleClassID = "101B";
+    let sampleSubjectID = "PHILOS";
+    let sampleClassID = "22W";
     // Test M152A (TA thing)
     let sampleTerm = "26W";
     let sampleLecture = null;

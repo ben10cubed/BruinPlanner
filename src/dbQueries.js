@@ -27,7 +27,6 @@ export function initDB() {
             enroll TEXT,
             sectionID TEXT,
             status TEXT,
-            avail TEXT,
             waitlist TEXT,
             info TEXT,
             day TEXT,
@@ -56,13 +55,12 @@ export function createClassEntry(db, classData) {
 
 // Create data entry into sectionData table
 export function createSectionEntry(db, sectionData) {
-    db.run(`INSERT INTO sectionData (subjectID, classID, enroll, sectionID, status, avail, waitlist, info, day, time, location, units, instructor)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    db.run(`INSERT INTO sectionData (subjectID, classID, enroll, sectionID, status, waitlist, info, day, time, location, units, instructor)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(subjectID, classID, sectionID)
             DO UPDATE SET
             enroll = excluded.enroll,
             status = excluded.status,
-            avail = excluded.avail,
             waitlist = excluded.waitlist,
             info = excluded.info,
             day = excluded.day,
@@ -98,7 +96,7 @@ export function testa(db) {
 
 // Return all entries for a specific subjectID and classID
 export function getClassEntries(db, subjectID, classID) {
-    const stmt = db.prepare(`SELECT enroll, sectionID, status, avail, waitlist, info, day, time, location, units, instructor FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}';`);
+    const stmt = db.prepare(`SELECT enroll, sectionID, status, waitlist, info, day, time, location, units, instructor FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}';`);
     const results = getTable(stmt);
     return results;
 }
@@ -150,11 +148,11 @@ export function getSectionStatus(db, subjectID, classID, sectionID){
     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
 }
 
-// Return avail for a specific section
-export function getSectionAvail(db, subjectID, classID, sectionID){
-    const stmt = db.prepare(`SELECT avail FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
-    return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
-}
+// // Return avail for a specific section
+// export function getSectionAvail(db, subjectID, classID, sectionID){
+//     const stmt = db.prepare(`SELECT avail FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
+//     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
+// }
 
 // Return waitlist for a specific section
 export function getSectionWaitlist(db, subjectID, classID, sectionID){
