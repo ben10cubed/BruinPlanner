@@ -1,7 +1,7 @@
 import { getSubjectID } from "./getSubjectID.js";
 import { getClassID } from "./getClassID.js";
 import { getClassData } from "./getClassData.js";
-import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionTime, getClasses, getSections, createClassEntry, testa } from "./dbQueries.js";
+import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionTime, getClasses, getSections, createClassEntry, testa, getSectionStatus, getSectionAvail } from "./dbQueries.js";
 import { fetchCourse } from "./getLectures.js";
 
 async function main() {
@@ -56,8 +56,10 @@ async function main() {
         // console.log(getSectionStartTime(db, "COM SCI", "35L", "Dis 1A"));
         // console.log("Fetch COM SCI 35L Dis 1A end time: ");
         // console.log(getSectionEndTime(db, "COM SCI", "35L", "Dis 1A"));
-        // console.log("Fetch COM SCI 35L Dis 1A avail: ");
-        // console.log(getSectionAvail(db, "COM SCI", "35L", "Dis 1A"));
+        console.log("Fetch section avail: ");
+        console.log(getSectionAvail(db, sampleSubjectID, sampleClassID, "Lec 1"));
+        console.log("Fetch section status: ");
+        console.log(getSectionStatus(db, sampleSubjectID, sampleClassID, "Lec 1"));
         // console.log(testa(db));
     });
 }

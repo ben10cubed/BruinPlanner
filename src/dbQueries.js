@@ -142,17 +142,32 @@ function getSingleSectionEntry(stmt, subjectID, classID, sectionID){
     return result;
 }
 
-// Return status for a specific section
+// Return status (excluding availability) for a specific section
 export function getSectionStatus(db, subjectID, classID, sectionID){
     const stmt = db.prepare(`SELECT status FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
-    return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
+    let statusCol = getSingleSectionEntry(stmt, subjectID, classID, sectionID).split('|');
+    return statusCol.slice(1);
 }
 
-// // Return avail for a specific section
-// export function getSectionAvail(db, subjectID, classID, sectionID){
-//     const stmt = db.prepare(`SELECT avail FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
-//     return getSingleSectionEntry(stmt, subjectID, classID, sectionID);
-// }
+// Return avail for a specific section (O, C, X, W, T)
+export function getSectionAvail(db, subjectID, classID, sectionID){
+    const stmt = db.prepare(`SELECT status FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
+    let avail = getSingleSectionEntry(stmt, subjectID, classID, sectionID).split('|');
+    switch(avail[0]){
+        case "Open":
+            return 'O';
+        case "Closed":
+            return 'C';
+        case "Cancelled":
+            return 'X'
+        case "Waitlist":
+            return 'W'
+        case "Tentative":
+            return 'T';
+        default:
+            return "Unknown Avail";
+    }
+}
 
 // Return waitlist for a specific section
 export function getSectionWaitlist(db, subjectID, classID, sectionID){
