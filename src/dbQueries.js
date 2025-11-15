@@ -164,6 +164,8 @@ export function getSectionAvail(db, subjectID, classID, sectionID){
             return 'W'
         case "Tentative":
             return 'T';
+        case "Suspended":
+            return 'S';
         default:
             return "Unknown Avail";
     }
