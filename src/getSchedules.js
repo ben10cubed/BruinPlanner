@@ -1,6 +1,6 @@
 //Assumes db already exists
 
-import { getClassData } from "./dbQueries.js"
+import { getSectionDay, getSectionTime, getSections, getSectionAvail, getClassEntries } from "./dbQueries.js"
 
 const strToDay = {
     "M": 0,
@@ -12,13 +12,18 @@ const strToDay = {
     "U": 6
 }
 
-function filterAvailable(courseData) { //returns new courseData array with only available lectures and discussions
+function filterAvailable(db, subjectID, classID, courseData) { //returns new courseData array with only available lectures and discussions
     const newCourseData = []
     for(var data of courseData) {
-        if(data['avail'] == 'O') {
+        let sectionID = data['sectionID'];
+        let avail = getSectionAvail(db, subjectID, classID, sectionID);
+        //console.log(avail);
+        if(avail == 'O') {
+            //console.log(data);
             newCourseData.push(data);
         }
     }
+    //console.log(newCourseData);
     return newCourseData;
 }
 
@@ -31,7 +36,7 @@ function parseCourseID(courseID) {
 }
 
 function getAllPossibilities(courseMap) {
-  const courses = Array.from(courseMap.keys());
+  const courses = Object.keys(courseMap);
 
   function helper(idx, current) {
     if (idx === courses.length) {
@@ -39,7 +44,7 @@ function getAllPossibilities(courseMap) {
     }
 
     const course = courses[idx];
-    const lectures = courseMap.get(course);
+    const lectures = courseMap[course];
     const all = [];
 
     for (const [lecture, discussions] of lectures) {
@@ -70,6 +75,7 @@ function getDays(str) {
         } else {
             day += str[index];
         }
+        index++;
     }
     days.push(day);
     return days;
@@ -84,8 +90,9 @@ function getTimes(str) {
             timesStr.push(timeStr);
             timeStr = "";
         } else {
-            timesStr += str[index];
+            timeStr += str[index];
         }
+        index++;
     }
     timesStr.push(timeStr);
 
@@ -109,29 +116,34 @@ function hasOverlap(time1, time2) {
     return !(end1 <= start2 || end2 <= start1);
 }
 
-function hasConflicts(sched) {
+function hasConflicts(db, sched) {
     const daysArr = new Array(7);
     for(let i = 0; i < 7; i++) {
         daysArr[i] = [];
     }
 
-    for(const [courseID, sectionList] of sched) {
+    for (const [courseID, sectionList] of Object.entries(sched)) {
         let [subjectID, classID] = parseCourseID(courseID);
         for(let sectionID of sectionList) {
-            let daysStr = getSectionDay(subjectID, classID, sectionID);
+            if(sectionID.length == 1) {
+                sectionID = "Lec "+sectionID;
+            } else {
+                sectionID = "Dis "+sectionID;
+            }
+            let daysStr = getSectionDay(db, subjectID, classID, sectionID);
             let days = getDays(daysStr);
 
-            let timesStr = getSectionTime(subjectID, classID, sectionID);
+            let timesStr = getSectionTime(db, subjectID, classID, sectionID);
             let times = getTimes(timesStr);
 
             for(let i = 0; i < days.length; i++) {
                 let day = strToDay[days[i]];
                 let time = times[i];
-                for(const otherTime of days[day]) {
+                for(const otherTime of daysArr[day]) {
                     if(hasOverlap(time, otherTime)) {
                         return true;
                     }
-                    days[day].push(time);
+                    daysArr[day].push(time);
                 }
             }
         }
@@ -139,14 +151,23 @@ function hasConflicts(sched) {
     return false;
 }
 
+function cutSectionID(str) {
+    let index = 0;
+    while(str[index] != " ") {
+        index++;
+    }
+    return str.substring(index+1);
+}
+
 /**
  * Fetches all class data for all subjects in a given term.
  * @param {string} term - UCLA term code (e.g., "26W").
  * @param {Promise<Array>} courses - array that stores requested course subject ID's and course numbers
+ * @param {database} db
  * @returns {Promise<Array>} 2D array that specifies which sections are in the schedule (course, lecture #, discussion #).
  */
 
-export async function getSchedules(term="26W", courses) {
+export async function getSchedules(term="26W", courses, db) {
     const courseMap = {};
 
     const numCourses = courses.length;
@@ -157,18 +178,20 @@ export async function getSchedules(term="26W", courses) {
         let courseID = subjectID+'+'+classID;
         courseMap[courseID] = [];
         const courseData = getSections(db, subjectID, classID);
-        const newCourseData = filterAvailable(courseData);
-        for(let course of courseData) {
-            if(course['sectionID'].length == 1) {
-                courseMap[courseID].push(course['sectionID']);
-                courseMap[courseID].push([]);
+        const newCourseData = filterAvailable(db, subjectID, classID, courseData);
+        console.log(newCourseData);
+        for(let course of newCourseData) {
+            let sectionID = cutSectionID(course['sectionID'])
+            if(sectionID.length == 1) {
+                courseMap[courseID].push([sectionID, []]);
             }
         }
         for(let section of courseData) {
-            if(section['sectionID'].length == 2) {
+            let sectionID = cutSectionID(section['sectionID']);
+            if(sectionID.length == 2) {
                 for(let i = 0; i < courseMap[courseID].length; i++) {
-                    if(courseMap[courseID][i][0] == section['sectionID'][0]) {
-                        courseMap[courseID][i][1].push(section['sectionID']);
+                    if(courseMap[courseID][i][0] == sectionID[0]) {
+                        courseMap[courseID][i][1].push(sectionID);
                         break;
                     }
                 }
@@ -176,13 +199,20 @@ export async function getSchedules(term="26W", courses) {
         }
     }
 
+    // const courseKeys = Object.keys(courseMap);
+    // for(let course of courseKeys) {
+    //     console.log(`Course ${course}`);
+    //     console.log(courseMap[course]);
+    // }
+
     let possibilities = getAllPossibilities(courseMap);
+    //console.log(possibilities);
 
     const validSchedules = [];
     for(let poss of possibilities) {
-        if(!hasConflicts(poss)) {
+        if(!hasConflicts(db, poss)) {
             validSchedules.push(poss);
         }
     }
-    return poss;
+    return validSchedules;
 }
