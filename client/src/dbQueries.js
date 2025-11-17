@@ -1,44 +1,63 @@
 import initSqlJs from "sql.js";
 
+export async function initDB() {
+  const SQL = await initSqlJs({
+    locateFile: () => "/sql-wasm.wasm",
+  });
 
-export function initDB() {
-    return initSqlJs().then(SQL => {
-        const db = new SQL.Database();
+  let db;
 
-        //New Table for subject Data, subjectID and subjectName; subjectID is primary key
-        db.run(`CREATE TABLE IF NOT EXISTS subjectData (
-            subjectID TEXT PRIMARY KEY,
-            subjectName TEXT
-            );`);
+  try {
+    // Try to load the prebuilt DB
+    const res = await fetch("/Math.db");  // or /classes.db
+    if (!res.ok) throw new Error("No prebuilt DB found");
 
-        //Table for subjectID and classID mapping
-        db.run(`CREATE TABLE IF NOT EXISTS classData (
-            subjectID TEXT,
-            classID TEXT,
-            className TEXT,
-            PRIMARY KEY (subjectID, classID)
-            );`);
+    const buf = await res.arrayBuffer();
+    db = new SQL.Database(new Uint8Array(buf));
+    console.log("Loaded prebuilt DB");
+  } catch (err) {
+    console.warn("Falling back to empty DB:", err);
+    db = new SQL.Database();
+  }
 
+  // Ensure tables exist (safe even if file already has them)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS subjectData (
+      subjectID TEXT PRIMARY KEY,
+      subjectName TEXT
+    );
+  `);
 
-        //We will likely have to change this eventually.
-        db.run(`CREATE TABLE IF NOT EXISTS sectionData (
-            subjectID TEXT,
-            classID TEXT,
-            enroll TEXT,
-            sectionID TEXT,
-            status TEXT,
-            waitlist TEXT,
-            info TEXT,
-            day TEXT,
-            time TEXT,
-            location TEXT,
-            units TEXT,
-            instructor TEXT,
-            PRIMARY KEY (subjectID, classID, sectionID)
-            );`);
-        return db;
-    });
+  db.run(`
+    CREATE TABLE IF NOT EXISTS classData (
+      subjectID TEXT,
+      classID TEXT,
+      className TEXT,
+      PRIMARY KEY (subjectID, classID)
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sectionData (
+      subjectID TEXT,
+      classID TEXT,
+      enroll TEXT,
+      sectionID TEXT,
+      status TEXT,
+      waitlist TEXT,
+      info TEXT,
+      day TEXT,
+      time TEXT,
+      location TEXT,
+      units TEXT,
+      instructor TEXT,
+      PRIMARY KEY (subjectID, classID, sectionID)
+    );
+  `);
+
+  return db;
 }
+
 
 //Separate entry functions for different types of data
 export function createSubjectEntry(db, subjectData) {

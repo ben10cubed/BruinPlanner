@@ -1,195 +1,278 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "./App.css";
 
-// Mock class data
-const ALL_CLASSES = [
-  {
-    id: "COMSCI-31",
-    subject: "COM SCI",
-    number: "31",
-    title: "Introduction to Computer Science I",
-    sections: [
-      {
-        id: "COMSCI-31-LEC1",
-        label: "LEC 1",
-        days: ["Mon", "Wed", "Fri"],
-        start: "10:00",
-        end: "10:50",
-        location: "Boelter 3400"
-      },
-      {
-        id: "COMSCI-31-LEC2",
-        label: "LEC 2",
-        days: ["Mon", "Wed", "Fri"],
-        start: "12:00",
-        end: "12:50",
-        location: "Boelter 3400"
-      }
-    ]
-  },
-  {
-    id: "MATH-33A",
-    subject: "MATH",
-    number: "33A",
-    title: "Linear Algebra",
-    sections: [
-      {
-        id: "MATH-33A-LEC1",
-        label: "LEC 1",
-        days: ["Tue", "Thu"],
-        start: "09:30",
-        end: "10:45",
-        location: "MS 4000"
-      },
-      {
-        id: "MATH-33A-LEC2",
-        label: "LEC 2",
-        days: ["Tue", "Thu"],
-        start: "14:00",
-        end: "15:15",
-        location: "MS 4000"
-      }
-    ]
-  },
-  {
-    id: "PHY-1A",
-    subject: "PHYSICS",
-    number: "1A",
-    title: "Intro Physics",
-    sections: [
-      {
-        id: "PHY-1A-LEC1",
-        label: "LEC 1",
-        days: ["Mon", "Wed"],
-        start: "11:00",
-        end: "12:15",
-        location: "PAB 1234"
-      },
-      {
-        id: "PHY-1A-LEC2",
-        label: "LEC 2",
-        days: ["Tue", "Thu"],
-        start: "11:00",
-        end: "12:15",
-        location: "PAB 1234"
-      }
-    ]
-  }
-];
+import {
+  initDB,
+  createSubjectEntry,
+  searchSubjectArea,
+  searchClass,
+  getClassEntries,
+} from "./dbQueries.js";
+
+import { getSubjectID } from "./getSubjectID.js";
+
+/* ------------------------- Helper functions ------------------------- */
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const START_HOUR = 8;
 const END_HOUR = 20;
 
-function timeToMinutes(t) {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
+function normalizeDays(dayStr) {
+  if (!dayStr) return [];
+  const parts = dayStr.split("|");
+  const res = [];
+  for (const p of parts) {
+    for (const ch of p) {
+      if (ch === "M") res.push("Mon");
+      if (ch === "T") res.push("Tue");
+      if (ch === "W") res.push("Wed");
+      if (ch === "R") res.push("Thu");
+      if (ch === "F") res.push("Fri");
+    }
+  }
+  return [...new Set(res)];
 }
+
+function toHHMM(numStr) {
+  if (!numStr) return "";
+  const s = numStr.padStart(4, "0");
+  return `${s.slice(0, 2)}:${s.slice(2)}`;
+}
+
+function sectionRowToSection(subjectID, classID, className, row) {
+  const rawDay = row.day;
+  const rawTime = row.time;
+  let start = "";
+  let end = "";
+
+  if (rawTime && !rawTime.toLowerCase().includes("tbd")) {
+    const first = rawTime.split("|")[0];
+    const [s, e] = first.split("-");
+    start = toHHMM(s);
+    end = toHHMM(e);
+  }
+
+  return {
+    id: `${subjectID}-${classID}-${row.sectionID}`,
+    label: row.sectionID,
+    days: normalizeDays(rawDay),
+    start,
+    end,
+    location: row.location || "",
+    courseId: `${subjectID} ${classID}`,
+    courseTitle: className,
+  };
+}
+
+/* ------------------------- Main App ------------------------- */
 
 export default function App() {
   const [page, setPage] = useState("login");
+  const [db, setDb] = useState(null);
+  const [loadingDb, setLoadingDb] = useState(true);
+  const [dbError, setDbError] = useState(null);
+
+  // Initialize DB + load subjects
+useEffect(() => {
+  (async () => {
+    try {
+      console.log("Starting app init…");
+      const dbInstance = await initDB();
+      console.log("DB initialized OK");
+
+      const subjects = await getSubjectID("26W");
+      console.log("Fetched subjects:", subjects.length);
+      console.log("First subject:", subjects[0]);
+
+      for (const subj of subjects) {
+        // subj = { subjectID, subjectName }
+        createSubjectEntry(dbInstance, [subj.subjectID, subj.subjectName]);
+      }
+      console.log("Inserted subjects into DB");
+
+      setDb(dbInstance);
+    } catch (e) {
+      console.error("Startup error:", e);
+      setDbError(`Failed to initialize DB: ${e.message || e}`);
+    } finally {
+      setLoadingDb(false);
+    }
+  })();
+}, []);
+
+
+  if (loadingDb) return <div>Loading database...</div>;
+  if (dbError) return <div>{dbError}</div>;
+
   return (
     <div>
       {page === "login" ? (
         <LoginPage onLogin={() => setPage("main")} />
       ) : (
-        <MainPage />
+        <MainPage db={db} />
       )}
     </div>
   );
 }
 
-/* LOGIN PAGE */
+/* ------------------------- Login Page ------------------------- */
+
 function LoginPage({ onLogin }) {
   return (
     <div className="login-card">
       <h2>Dummy Login</h2>
-      <p>Placeholder only. Click to continue to the scheduler.</p>
+      <p>Click to continue to the scheduler.</p>
       <button onClick={onLogin}>Login</button>
     </div>
   );
 }
 
-/* MAIN PAGE */
-function MainPage() {
+/* ------------------------- Main Page ------------------------- */
+
+function MainPage({ db }) {
   const [subjectQuery, setSubjectQuery] = useState("");
+  const [subjectResults, setSubjectResults] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const [classQuery, setClassQuery] = useState("");
+  const [courseResults, setCourseResults] = useState([]);
   const [selectedSections, setSelectedSections] = useState([]);
 
-  const filteredCourses = useMemo(() => {
-    const s = subjectQuery.trim().toLowerCase();
-    const c = classQuery.trim().toLowerCase();
-    return ALL_CLASSES.filter((course) => {
-      const subjectMatches = !s || course.subject.toLowerCase().includes(s);
-      const classMatches =
-        !c ||
-        course.number.toLowerCase().includes(c) ||
-        course.title.toLowerCase().includes(c);
-      return subjectMatches && classMatches;
-    });
-  }, [subjectQuery, classQuery]);
+  /* --- Subject autocomplete search --- */
+  useEffect(() => {
+    if (!db) return;
 
-  const handleAddSection = (course, section) => {
-    setSelectedSections((prev) => {
-      if (prev.some((s) => s.id === section.id)) return prev;
-      return [...prev, { ...section, courseId: course.id, courseTitle: course.title }];
-    });
+    const q = subjectQuery.trim().toUpperCase();
+    if (!q) {
+      setSubjectResults([]);
+      return;
+    }
+
+    try {
+      const rows = searchSubjectArea(db, q); // matches subject IDs
+      setSubjectResults(rows);
+    } catch (e) {
+      console.error(e);
+      setSubjectResults([]);
+    }
+  }, [subjectQuery, db]);
+
+  /* --- Class search inside selected subject --- */
+  useEffect(() => {
+    if (!db || !selectedSubject) {
+      setCourseResults([]);
+      return;
+    }
+
+    const sTerm = classQuery.trim().toUpperCase();
+
+    try {
+      const rows = searchClass(db, selectedSubject.subjectID, sTerm);
+
+      const formatted = rows.map((cls) => {
+        const entries = getClassEntries(db, cls.subjectID, cls.classID);
+        const sections = entries.map((row) =>
+          sectionRowToSection(cls.subjectID, cls.classID, cls.className, row)
+        );
+
+        return {
+          id: `${cls.subjectID}-${cls.classID}`,
+          subject: cls.subjectID,
+          number: cls.classID,
+          title: cls.className,
+          sections,
+        };
+      });
+
+      setCourseResults(formatted);
+    } catch (e) {
+      console.error(e);
+      setCourseResults([]);
+    }
+  }, [classQuery, selectedSubject, db]);
+
+  /* --- Add/remove timetable sections --- */
+  const addSection = (sec) => {
+    setSelectedSections((prev) =>
+      prev.some((s) => s.id === sec.id) ? prev : [...prev, sec]
+    );
   };
 
-  const handleRemoveSection = (id) => {
+  const removeSection = (id) => {
     setSelectedSections((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const handleClear = () => setSelectedSections([]);
+  const clearAll = () => setSelectedSections([]);
 
   return (
     <div className="main-container">
-      {/* LEFT SEARCH PANEL */}
+      {/* Left Panel */}
       <div className="search-panel">
         <h2>Class Search</h2>
 
-        <div className="search-box">
-          <h4>Search by Subject & Class</h4>
-          <label>Subject ID</label>
-          <input
-            value={subjectQuery}
-            onChange={(e) => setSubjectQuery(e.target.value)}
-            placeholder="e.g. COM SCI, MATH, PHYSICS"
-          />
-          <label>Class (Number or Title)</label>
-          <input
-            value={classQuery}
-            onChange={(e) => setClassQuery(e.target.value)}
-            placeholder="e.g. 31 or Linear Algebra"
-          />
-        </div>
+        {/* SUBJECT INPUT */}
+        <label>Subject ID</label>
+        <input
+          value={subjectQuery}
+          onChange={(e) => {
+            setSubjectQuery(e.target.value);
+            setSelectedSubject(null);
+            setCourseResults([]);
+          }}
+          placeholder="e.g. COM SCI, MATH"
+        />
+
+        {subjectResults.length > 0 && (
+          <div className="dropdown">
+            {subjectResults.map((s) => (
+              <div
+                key={s.subjectID}
+                className="dropdown-item"
+                onClick={() => {
+                  setSelectedSubject(s);
+                  setSubjectQuery(`${s.subjectID} – ${s.subjectName}`);
+                  setSubjectResults([]);
+                }}
+              >
+                <strong>{s.subjectID}</strong> — {s.subjectName}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* CLASS INPUT */}
+        <label>Class (Number or Title)</label>
+        <input
+          value={classQuery}
+          onChange={(e) => setClassQuery(e.target.value)}
+          disabled={!selectedSubject}
+          placeholder="e.g. 31 or Linear Algebra"
+        />
 
         <div className="search-results">
           <h4>Search Results</h4>
-          {filteredCourses.length === 0 && <p>No matching courses.</p>}
-          {filteredCourses.map((course) => (
-            <div key={course.id} className="course-card">
+
+          {selectedSubject && courseResults.length === 0 && (
+            <p>No matching classes.</p>
+          )}
+
+          {courseResults.map((c) => (
+            <div key={c.id} className="course-card">
               <strong>
-                {course.subject} {course.number}
+                {c.subject} {c.number}
               </strong>{" "}
-              — {course.title}
-              <div style={{ marginLeft: "10px", marginTop: "2px" }}>
-                {course.sections.map((sec) => (
+              — {c.title}
+              <div style={{ marginLeft: "10px", marginTop: "4px" }}>
+                {c.sections.map((sec) => (
                   <div
                     key={sec.id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginTop: "2px"
-                    }}
+                    className="section-row"
                   >
                     <span>
-                      {sec.label}: {sec.days.join(", ")} {sec.start}-{sec.end} @{" "}
-                      {sec.location}
+                      {sec.label}: {sec.days.join(", ")} {sec.start}-{sec.end}
+                      {sec.location ? ` @ ${sec.location}` : ""}
                     </span>
-                    <button onClick={() => handleAddSection(course, sec)}>
-                      Add to timetable
+                    <button onClick={() => addSection(sec)}>
+                      Add
                     </button>
                   </div>
                 ))}
@@ -199,30 +282,26 @@ function MainPage() {
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
+      {/* Right Panel */}
       <div className="selection-panel">
         <h3>Timetable Preview</h3>
+
         <Timetable sections={selectedSections} />
 
         <div className="selection-list">
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div className="list-header">
             <strong>Selected Sections</strong>
-            <button onClick={handleClear}>Clear</button>
+            <button onClick={clearAll}>Clear</button>
           </div>
+
           {selectedSections.length === 0 && <p>None yet.</p>}
+
           {selectedSections.map((s) => (
-            <div
-              key={s.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: "4px"
-              }}
-            >
+            <div key={s.id} className="selected-item">
               <span>
-                {s.courseId} {s.label} — {s.days.join(", ")} {s.start}-{s.end}
+                {s.courseId} {s.label} — {s.start}-{s.end}
               </span>
-              <button onClick={() => handleRemoveSection(s.id)}>Remove</button>
+              <button onClick={() => removeSection(s.id)}>X</button>
             </div>
           ))}
         </div>
@@ -231,122 +310,45 @@ function MainPage() {
   );
 }
 
-/* TIMETABLE */
-function Timetable({ sections }) {
-  const COLORS = [
-    "#2563eb", "#16a34a", "#dc2626", "#eab308", "#9333ea",
-    "#f97316", "#0ea5e9", "#10b981", "#d946ef", "#f43f5e",
-    "#3b82f6", "#a16207", "#6d28d9", "#059669", "#ef4444",
-    "#0284c7", "#ca8a04", "#7c3aed", "#facc15", "#ea580c"
-  ];
+/* ------------------------- Timetable Component ------------------------- */
 
+function Timetable({ sections }) {
   const colorMap = useMemo(() => {
+    const colors = [
+      "#2563eb", "#16a34a", "#dc2626", "#eab308", "#9333ea",
+      "#f97316", "#0ea5e9", "#10b981", "#d946ef", "#f43f5e"
+    ];
     const map = new Map();
     let idx = 0;
-    for (const sec of sections) {
-      const key = sec.courseId || sec.subject + sec.number || sec.title;
-      if (!map.has(key)) {
-        map.set(key, COLORS[idx % COLORS.length]);
-        idx++;
-      }
-    }
+    sections.forEach((s) => {
+      const key = s.courseId;
+      if (!map.has(key)) map.set(key, colors[idx++ % colors.length]);
+    });
     return map;
   }, [sections]);
 
-  const getRowFromTime = (time) => {
-    const [h, m] = time.split(":").map(Number);
-    return (h - START_HOUR) * 4 + Math.floor(m / 15) + 1;
-  };
-
-  // Define visible time range (8 AM to 6 PM)
-  const visibleEndHour = 18;
-
-  // Determine if any classes go beyond 6 PM — extend scrollable grid
-  const maxHour =
-    sections.length > 0
-      ? Math.max(
-          ...sections.map((s) => parseInt(s.end.split(":")[0]) || visibleEndHour)
-        )
-      : visibleEndHour;
-
-  const totalRows = (maxHour - START_HOUR) * 4;
-
   return (
-    <div className="timetable-container">
-      <div className="timetable-header">
-        <div className="time-col"></div>
-        {DAYS.map((d) => (
-          <div key={d} className="day-header">{d}</div>
-        ))}
-      </div>
-
-      <div
-        className="timetable-grid"
-        style={{
-          gridTemplateColumns: `70px repeat(${DAYS.length}, 1fr)`,
-          gridTemplateRows: `repeat(${totalRows}, 1fr)`,
-          height: `${(visibleEndHour - START_HOUR) * 50}px` // about 10 hours visible
-        }}
-      >
-        {/* Time Labels */}
-        {Array.from({ length: (maxHour - START_HOUR) }).map((_, i) => {
-          const hour = START_HOUR + i;
+    <div className="timetable">
+      {sections.map((sec) =>
+        sec.days.map((day) => {
+          const color = colorMap.get(sec.courseId);
           return (
             <div
-              key={hour}
-              className="time-label"
-              style={{ gridRow: `${i * 4 + 1} / span 4`, gridColumn: 1 }}
+              key={`${sec.id}-${day}`}
+              className="time-block"
+              style={{
+                background: `${color}33`,
+                borderColor: color,
+              }}
             >
-              {hour}:00
+              <div>{sec.courseId}</div>
+              <div>{sec.label}</div>
+              <div>{sec.start}-{sec.end}</div>
+              <div>{sec.location}</div>
             </div>
           );
-        })}
-
-        {/* Empty grid cells */}
-        {DAYS.map((_, colIdx) =>
-          Array.from({ length: totalRows }).map((_, rowIdx) => (
-            <div
-              key={`${colIdx}-${rowIdx}`}
-              className="grid-cell"
-              style={{
-                gridColumn: colIdx + 2,
-                gridRow: rowIdx + 1
-              }}
-            />
-          ))
-        )}
-
-        {/* Class Blocks */}
-        {sections.map((sec) =>
-          sec.days.map((day) => {
-            const col = DAYS.indexOf(day);
-            if (col === -1) return null;
-
-            const startRow = getRowFromTime(sec.start);
-            const endRow = getRowFromTime(sec.end);
-            const color = colorMap.get(sec.courseId || sec.title) || "#3b82f6";
-
-            return (
-              <div
-                key={`${sec.id}-${day}`}
-                className="timetable-block"
-                style={{
-                  gridColumn: col + 2,
-                  gridRow: `${startRow} / ${endRow}`,
-                  background: `${color}22`,
-                  borderColor: color,
-                  color
-                }}
-              >
-                <div className="block-title">{sec.courseId}</div>
-                <div className="block-label">{sec.label}</div>
-                <div className="block-time">{sec.start}-{sec.end}</div>
-                <div className="block-loc">{sec.location}</div>
-              </div>
-            );
-          })
-        )}
-      </div>
+        })
+      )}
     </div>
   );
 }
