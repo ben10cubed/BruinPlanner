@@ -62,6 +62,16 @@ function getTokenStr(subjectCode, courseID) {
         + getCatalogStr(courseID);
 }
 
+function generateToken(subjectCode, courseID) {
+    // original base64 token
+    const base = Buffer.from(getTokenStr(subjectCode, courseID), "utf8").toString("base64");
+    // append a small random salt to make it unique each time
+    const salt = Math.floor(Math.random() * 1e6);
+    return `${base}${salt}`;
+}
+
+
+
 // ---------------- MAIN FUNCTION ----------------
 
 /*inputs
