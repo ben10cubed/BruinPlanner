@@ -1,16 +1,16 @@
 import fs from "fs";
 import path from "path";
 import initSqlJs from "sql.js";
-import { getSchedules } from "./getSchedules.js"; // adjust path if needed
+import { getSchedules } from "../getSchedules.js"; // adjust path if needed
 
 export async function testSchedules(term = "26W") {
     // Initialize SQL.js
     const SQL = await initSqlJs({
-        locateFile: file => path.resolve("./node_modules/sql.js/dist/sql-wasm.wasm")
+        locateFile: file => path.resolve("../node_modules/sql.js/dist/sql-wasm.wasm")
     });
 
     // Load database file
-    const fileBuffer = fs.readFileSync("Math.db");
+    const fileBuffer = fs.readFileSync("../Math.db");
     const db = new SQL.Database(fileBuffer);
 
     console.log("\nFetching schedules...\n");
@@ -29,7 +29,7 @@ export async function testSchedules(term = "26W") {
         console.log(schedule);
     }
 
-    console.log("Done.");
+    console.log(`${schedules.length} Possibilities`);
 }
 
 // Example usage:

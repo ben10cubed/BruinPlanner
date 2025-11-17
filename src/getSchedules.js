@@ -113,7 +113,13 @@ function hasOverlap(time1, time2) {
     const [start1, end1] = time1;
     const [start2, end2] = time2;
 
-    return !(end1 <= start2 || end2 <= start1);
+    if(start2 <= end1 && start2 >= start1) {
+        return true;
+    }
+    if(start1 <= end2 && start1 >= start2) {
+        return true;
+    }
+    return false;
 }
 
 function hasConflicts(db, sched) {
@@ -141,13 +147,16 @@ function hasConflicts(db, sched) {
                 let time = times[i];
                 for(const otherTime of daysArr[day]) {
                     if(hasOverlap(time, otherTime)) {
+                        // console.log(time);
+                        // console.log(otherTime);
                         return true;
                     }
-                    daysArr[day].push(time);
                 }
+                daysArr[day].push(time);
             }
         }
     }
+    //console.log(daysArr);
     return false;
 }
 
@@ -164,7 +173,7 @@ function cutSectionID(str) {
  * @param {string} term - UCLA term code (e.g., "26W").
  * @param {Promise<Array>} courses - array that stores requested course subject ID's and course numbers
  * @param {database} db
- * @returns {Promise<Array>} 2D array that specifies which sections are in the schedule (course, lecture #, discussion #).
+ * @returns {Promise<Array>} Array of plain value Maps, where each Map is a possible schedule. Key = subjectID + '+' + classID, and value = [lectureID, discussionID]
  */
 
 export async function getSchedules(term="26W", courses, db) {
@@ -179,14 +188,13 @@ export async function getSchedules(term="26W", courses, db) {
         courseMap[courseID] = [];
         const courseData = getSections(db, subjectID, classID);
         const newCourseData = filterAvailable(db, subjectID, classID, courseData);
-        console.log(newCourseData);
         for(let course of newCourseData) {
             let sectionID = cutSectionID(course['sectionID'])
             if(sectionID.length == 1) {
                 courseMap[courseID].push([sectionID, []]);
             }
         }
-        for(let section of courseData) {
+        for(let section of newCourseData) {
             let sectionID = cutSectionID(section['sectionID']);
             if(sectionID.length == 2) {
                 for(let i = 0; i < courseMap[courseID].length; i++) {

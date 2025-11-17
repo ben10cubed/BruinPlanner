@@ -1,4 +1,5 @@
 import fs from "fs";
+import readline from "readline";
 
 import { getSubjectID } from "./getSubjectID.js";
 import { getClassID } from "./getClassID.js";
@@ -18,23 +19,19 @@ async function fetchAllSections(term, subjectID) {
         // Store class info in DB
         await createClassEntry(db, [subjectID, classID, className]);
 
-        const maxLectures = 10;
+        const lectureHTML = await fetchCourse(subjectID, classID, term);
+        const lectureSections = getClassData(lectureHTML, subjectID, classID);
+        if(lectureHTML.includes("No results available based off your filter criteria.")) continue;
 
-        for (let lectureNum = 1; lectureNum <= maxLectures; lectureNum++) {
+        for(let lectureSection of lectureSections) {
+            await createSectionEntry(db, lectureSection);
+        }
+
+        const numLectures = lectureSections.length;
+
+        for (let lectureNum = 1; lectureNum <= numLectures; lectureNum++) {
             console.log(`${subjectID} ${classID} ${term} ${lectureNum}`);
-
-            const lectureHTML = await fetchCourse(subjectID, classID, term); // only 3 params
-
-            if (!lectureHTML || lectureHTML.includes("No results available based off your filter criteria")) break;
-
-            // Parse lecture info and create a section entry for the lecture
-            const lectureSections = getClassData(lectureHTML, subjectID, classID);
-            if (lectureSections && lectureSections.length > 0) {
-                // usually the lecture itself is the first entry
-                const lectureSection = lectureSections[0];
-                await createSectionEntry(db, lectureSection);
-            }
-
+            
             const classHTML = await fetchCourse(subjectID, classID, term, lectureNum);
             //await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -67,27 +64,37 @@ async function fetchAllSections(term, subjectID) {
 const term = "26W";
 const subjectID = "MATH";
 
+// helper to prompt user
+function askQuestion(query) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    return new Promise(resolve => rl.question(query, ans => {
+        rl.close();
+        resolve(ans.trim());
+    }));
+}
+
 (async () => {
     try {
         const db = await fetchAllSections(term, subjectID);
 
+        // --- BREAKPOINT: ask user for confirmation ---
+        console.log("\nData fetched. Please verify output above.\n");
+        const answer = await askQuestion("Proceed to write Math.db? (Y/n): ");
+
+        if (answer.toLowerCase() === 'n') {
+            console.log("Aborted. Math.db was NOT overwritten.");
+            process.exit(0);
+        }
+
+        // continue only if Y or empty
         const binaryArray = db.export();
         fs.writeFileSync("Math.db", binaryArray);
 
         console.log("Saved database to Math.db");
 
-        // console.log("\nFetching schedules...\n");
-
-        // const courses = [['MATH', '31A'], ['MATH', '32B'], ['MATH', '131BH']];
-        // const schedules = getSchedules(term, courses, db);
-
-        // console.log("Possible schedules:\n");
-
-        // for(let schedule of schedules) {
-        //     console.log(schedule);
-        // }
-
-        // console.log("Done.");
     } catch (err) {
         console.error(err);
     }
