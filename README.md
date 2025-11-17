@@ -1,4 +1,4 @@
-# BruinPlanner
+# BruinPlanner, subjectID-api
 
 1. Moved ALL get files from src to client/src (importing issue in App.jsx).
 2. created a new file server.js that handles the getSubjectID function
