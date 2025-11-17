@@ -2,19 +2,13 @@ import { getSubjectID } from "../getSubjectID.js";
 import { getClassID } from "../getClassID.js";
 import { getClassData } from "../getClassData.js";
 import { fetchCourse } from "../getLectures.js"; 
-import { 
-  initDB, createSectionEntry, createSubjectEntry, getAllEntries, 
-  getClassEntries, searchSubjectArea, searchClass, getSectionDay, 
-  getSectionStartTime, getSectionEndTime, getSectionAvail, 
-  getClasses, getSections, createClassEntry, testa 
-} from "../dbQueries.js";
 
 async function main() {
   const term = "26W";
 
   // 🔹 Manually set your subject ID and class ID here
-  const subjectID = "ARCH&UD";    // e.g. "COM SCI", "EC ENGR", etc.
-  const classID = "412";         // e.g. "0031", "0152A", etc.
+  const subjectID = "MATH";    // e.g. "COM SCI", "EC ENGR", etc.
+  const classID = "31A";         // e.g. "0031", "0152A", etc.
 
   console.log(`Fetching course data for ${subjectID} ${classID} (${term})`);
 

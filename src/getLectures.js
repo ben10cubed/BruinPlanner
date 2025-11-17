@@ -71,73 +71,77 @@ function getTokenStr(subjectCode, courseID) {
     lecture_num: optional parameter; if it is entered, then it returns the discussion sections corresponding to that lecture. If not, then it just returns the lectures
 */
 
-export async function fetchCourse(subject_code, course_ID, term, lecture_num=null) {
-    const url_base = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
+export async function fetchCourse(subject_code, course_ID, term, lecture_num = null) {
+    async function getResponse(isRootFlag) {
+        const url_base = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
 
-    const Token = Buffer.from(getTokenStr(subject_code, course_ID), "utf8").toString("base64");
+        const Token = Buffer.from(getTokenStr(subject_code, course_ID), "utf8").toString("base64");
 
-    const model = {
-        Term: term,
-        SubjectAreaCode: subject_code,
-        CatalogNumber: getCatalogStrPadded(course_ID),
-        IsRoot: lecture_num == null ? true : false,
-        SessionGroup: "%",
-        ClassNumber: lecture_num === null ? null : " 00"+String(lecture_num)+"  ",
-        SequenceNumber: null,
-        Path: getSubjectCodeWithoutSpace(subject_code) + getCatalogStr(course_ID),
-        MultiListedClassFlag: isMultiListed(course_ID), //From testing, this doesn't actually seem to matter as an input
-        Token: Token
-    };
+        const model = {
+            Term: term,
+            SubjectAreaCode: subject_code,
+            CatalogNumber: getCatalogStrPadded(course_ID),
+            IsRoot: isRootFlag,
+            SessionGroup: "%",
+            ClassNumber: lecture_num === null ? null : " 00" + String(lecture_num) + "  ",
+            SequenceNumber: null,
+            Path: getSubjectCodeWithoutSpace(subject_code) + getCatalogStr(course_ID),
+            MultiListedClassFlag: isMultiListed(course_ID),
+            Token: Token
+        };
 
-    let model_encoded = new URLSearchParams({ model: JSON.stringify(model) }).toString();
+        const model_encoded = new URLSearchParams({ model: JSON.stringify(model) }).toString();
 
-    //Ben: Modified impacted
-    //We want all of these to be null to get unfiltered results
-    //We never noticed this, but previously lots of classes were being filtered out
-    const FilterFlags = {
-        enrollment_status: "O,W,C,X,T,S",
-        advanced: "y",
-        meet_days: "M,T,W,R,F,S,U",
-        start_time: "8:00 am",
-        end_time: "10:00 pm",
-        meet_locations: null,
-        meet_units: null,
-        instructor: null,
-        class_career: null,
-        impacted: null,
-        enrollment_restrictions: null,
-        enforced_requisites: null,
-        individual_studies: null,
-        summer_session: null
-    };
+        const FilterFlags = {
+            enrollment_status: "O,W,C,X,T,S",
+            advanced: "y",
+            meet_days: "M,T,W,R,F,S,U",
+            start_time: "8:00 am",
+            end_time: "10:00 pm",
+            meet_locations: null,
+            meet_units: null,
+            instructor: null,
+            class_career: null,
+            impacted: null,
+            enrollment_restrictions: null,
+            enforced_requisites: null,
+            individual_studies: null,
+            summer_session: null
+        };
 
-    let FilterFlags_encoded = new URLSearchParams({
-        FilterFlags: JSON.stringify(FilterFlags)
-    }).toString();
+        const FilterFlags_encoded = new URLSearchParams({
+            FilterFlags: JSON.stringify(FilterFlags)
+        }).toString();
 
-    const timestamp = Date.now().toString();
+        const timestamp = Date.now().toString();
+        const url = `${url_base}${model_encoded}&${FilterFlags_encoded}&_=${timestamp}`;
 
-    const url = `${url_base}${model_encoded}&${FilterFlags_encoded}&_=${timestamp}`;
-    const headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest"
-    };
+        const headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "X-Requested-With": "XMLHttpRequest"
+        };
 
-    // console.log("Requesting:", url);
+        try {
+            const response = await fetch(url, { headers });
+            return await response.text();
+        } catch (err) {
+            console.error(`Request failed (isRoot=${isRootFlag}):`, err);
+            return "";
+        }
+    }
 
-    try {
-        const response = await fetch(url, { headers });
-        const text = await response.text();
+    // --- Try both modes ---
+    const resultFalse = await getResponse(false);
+    const resultTrue = await getResponse(true);
 
-        // console.log("Status:", response.status);
-
-        // Return the HTML text instead of saving it
-        return text;
-    } catch (err) {
-        console.error("Request failed:", err);
-        return null;
+    // --- Return whichever is larger ---
+    if (resultTrue.length > resultFalse.length) {
+        return resultTrue;
+    } else {
+        return resultFalse;
     }
 }
+
 
 // console.log(await fetchCourse("MGMTEX", "260B", "26W"));

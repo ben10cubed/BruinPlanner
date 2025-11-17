@@ -34,7 +34,7 @@ async function main() {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const term = "26W";
 
-  const startSubject = "C&EE"; // 🔹 Change this to any subjectID you want to start from
+  const startSubject = "I A STD"; // 🔹 Change this to any subjectID you want to start from
 
   const errorFile = "errors.log";
   const emptyFile = "empty.log";
