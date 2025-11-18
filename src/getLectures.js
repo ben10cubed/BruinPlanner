@@ -93,7 +93,7 @@ export async function fetchCourse(subject_code, course_ID, term, lecture_num=nul
         IsRoot: lecture_num == null ? true : false,
         SessionGroup: "%",
         ClassNumber: lecture_num === null ? null : " 00"+String(lecture_num)+"  ",
-        SequenceNumber: null,
+        SequenceNumber: lecture_num == null ? null : "1",
         Path: getSubjectCodeWithoutSpace(subject_code) + getCatalogStr(course_ID),
         MultiListedClassFlag: isMultiListed(course_ID), //From testing, this doesn't actually seem to matter as an input
         Token: Token
