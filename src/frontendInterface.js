@@ -1,6 +1,6 @@
 import { getSubjectID } from "./getSubjectID.js";
 import { getClassID } from "./getClassID.js";
-import { getSchedules } from "./getSchedules.js";
+import { getSchedules as generateSchedules } from "./getSchedules.js";
 import { initDB, createSubjectEntry, searchSubjectArea, searchClass, createClassEntry } from "./dbQueries.js";
 
 const schoolTerm = "26W";
@@ -86,7 +86,7 @@ export async function saveDB(){
 //   'MATH+131BH': [ '1', '1A' ]
 // }]
 export async function getSchedules(courses) {
-    return getSchedules(db, courses);
+    return generateSchedules(db, courses);
 }
 
 // EXAMPLE IMPLEMENTATION OF frontendInterface
