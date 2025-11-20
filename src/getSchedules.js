@@ -176,7 +176,7 @@ function cutSectionID(str) {
  * @returns {Promise<Array>} Array of plain value Maps, where each Map is a possible schedule. Key = subjectID + '+' + classID, and value = [lectureID, discussionID]
  */
 
-export async function getSchedules(term="26W", courses, db) {
+export async function getSchedules(db, courses, term="26W") {
     const courseMap = {};
 
     const numCourses = courses.length;

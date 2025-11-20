@@ -1,5 +1,6 @@
 import { getSubjectID } from "./getSubjectID.js";
 import { getClassID } from "./getClassID.js";
+import { getSchedules } from "./getSchedules.js";
 import { initDB, createSubjectEntry, searchSubjectArea, searchClass, createClassEntry } from "./dbQueries.js";
 
 const schoolTerm = "26W";
@@ -50,6 +51,42 @@ export async function searchClasses(subjectID, searchTerm){
 // Function to save the updated database to the server
 export async function saveDB(){
 
+}
+
+//Function to get all possible schedules given a list of courses
+//Params: courses: array of courses that the user wants to take
+//Example input: courses = [
+                        //     ['MATH', '31A'],
+                        //     ['MATH', '32A'],
+                        //     ['MATH', '131BH']
+                        // ];
+//Returns: Array of plain value Maps, where each map represents a unique valid schedule:
+//          [{
+//              courseID#1: [lectureNum, discussionNum],
+//              courseID#2: [lectureNum, discussionNum],
+//              ...
+//          },
+//          {
+//              courseID#1: [lectureNum, discussionNum],
+//              courseID#2: [lectureNum, discussionNum],
+//              ...
+//          },
+//          ...
+//          ]
+// note: courseID is subjectID+classID. For example, the course ID for MATH 31A would be 'MATH+31A'
+//Example output:
+// [{
+//   'MATH+31A': [ '3', '3F' ],
+//   'MATH+32A': [ '4', '4E' ],
+//   'MATH+131BH': [ '1', '1A' ]
+// },
+// {
+//   'MATH+31A': [ '3', '3F' ],
+//   'MATH+32A': [ '4', '4F' ],
+//   'MATH+131BH': [ '1', '1A' ]
+// }]
+export async function getSchedules(courses) {
+    return getSchedules(db, courses);
 }
 
 // EXAMPLE IMPLEMENTATION OF frontendInterface

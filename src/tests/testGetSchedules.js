@@ -22,7 +22,7 @@ export async function testSchedules(term = "26W") {
     ];
 
     // Get schedules
-    const schedules = await getSchedules(term, courses, db);
+    const schedules = await getSchedules(db, courses, term);
 
     console.log("Possible schedules:\n");
     for (let schedule of schedules) {
