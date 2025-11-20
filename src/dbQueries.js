@@ -8,7 +8,8 @@ export function initDB() {
         //New Table for subject Data, subjectID and subjectName; subjectID is primary key
         db.run(`CREATE TABLE IF NOT EXISTS subjectData (
             subjectID TEXT PRIMARY KEY,
-            subjectName TEXT
+            subjectName TEXT,
+            timeStamp TEXT DEFAULT (strftime('%Y-%m-%d', 'now'))
             );`);
 
         //Table for subjectID and classID mapping
@@ -16,6 +17,7 @@ export function initDB() {
             subjectID TEXT,
             classID TEXT,
             className TEXT,
+            timeStamp TEXT DEFAULT (strftime('%Y-%m-%d %H', 'now')),
             PRIMARY KEY (subjectID, classID)
             );`);
 
@@ -34,6 +36,7 @@ export function initDB() {
             location TEXT,
             units TEXT,
             instructor TEXT,
+            timeStamp TEXT DEFAULT (strftime('%Y-%m-%d %H', 'now')),
             PRIMARY KEY (subjectID, classID, sectionID)
             );`);
         return db;
@@ -42,7 +45,12 @@ export function initDB() {
 
 //Separate entry functions for different types of data
 export function createSubjectEntry(db, subjectData) {
-    db.run(`INSERT INTO subjectData (subjectID, subjectName) VALUES (?, ?);`, subjectData);
+    db.run(`INSERT INTO subjectData (subjectID, subjectName) VALUES (?, ?)
+        ON CONFLICT(subjectID)
+        DO UPDATE SET
+        subjectName = excluded.subjectName,
+        timeStamp = excluded.timeStamp
+        WHERE subjectData.timeStamp != excluded.timeStamp;`, subjectData);
 }
 
 // Create data entry into classData table
@@ -50,7 +58,9 @@ export function createClassEntry(db, classData) {
     db.run(`INSERT INTO classData (subjectID, classID, className) VALUES (?, ?, ?)
         ON CONFLICT(subjectID, classID)
         DO UPDATE SET
-        className = excluded.className;`, classData);
+        className = excluded.className,
+        timeStamp = excluded.timeStamp
+        WHERE classData.timeStamp != excluded.timeStamp;`, classData);
 }
 
 // Create data entry into sectionData table
@@ -67,7 +77,9 @@ export function createSectionEntry(db, sectionData) {
             time = excluded.time,
             location = excluded.location,
             units = excluded.units,
-            instructor = excluded.instructor;`, sectionData);
+            instructor = excluded.instructor,
+            timeStamp = excluded.timeStamp
+            WHERE sectionData.timeStamp != excluded.timeStamp;`, sectionData);
 }
 
 // Refactored helper function for retrieving table data (getter functions)
@@ -145,30 +157,37 @@ function getSingleSectionEntry(stmt, subjectID, classID, sectionID){
 // Return status (excluding availability) for a specific section
 export function getSectionStatus(db, subjectID, classID, sectionID){
     const stmt = db.prepare(`SELECT status FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
-    let statusCol = getSingleSectionEntry(stmt, subjectID, classID, sectionID).split('|');
-    return statusCol.slice(1);
+    let statusCol = getSingleSectionEntry(stmt, subjectID, classID, sectionID);
+    if (statusCol){
+        return(statusCol.split('|').slice(1));
+    }
+    return "";
 }
 
 // Return avail for a specific section (O, C, X, W, T)
 export function getSectionAvail(db, subjectID, classID, sectionID){
     const stmt = db.prepare(`SELECT status FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}' AND sectionID = '${sectionID}';`);
-    let avail = getSingleSectionEntry(stmt, subjectID, classID, sectionID).split('|');
-    switch(avail[0]){
-        case "Open":
-            return 'O';
-        case "Closed":
-            return 'C';
-        case "Cancelled":
-            return 'X'
-        case "Waitlist":
-            return 'W'
-        case "Tentative":
-            return 'T';
-        case "Suspended":
-            return 'S';
-        default:
-            return "Unknown Avail";
+    let statusCol = getSingleSectionEntry(stmt, subjectID, classID, sectionID);
+    if(statusCol){
+        let avail = statusCol.split('|');
+        switch(avail[0]){
+            case "Open":
+                return 'O';
+            case "Closed":
+                return 'C';
+            case "Cancelled":
+                return 'X'
+            case "Waitlist":
+                return 'W'
+            case "Tentative":
+                return 'T';
+            case "Suspended":
+                return 'S';
+            default:
+                return "Unknown Avail";
+        }
     }
+    return "";
 }
 
 // Return waitlist for a specific section
