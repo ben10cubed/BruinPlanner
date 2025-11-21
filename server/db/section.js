@@ -11,5 +11,6 @@ export function createSectionEntry(db, sectionData) {
             time = excluded.time,
             location = excluded.location,
             units = excluded.units,
-            instructor = excluded.instructor;`, sectionData);
+            instructor = excluded.instructor,
+            timeStamp = excluded.timeStamp;`, sectionData);
 }

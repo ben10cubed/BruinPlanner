@@ -2,13 +2,12 @@ import { getTable } from "../utils/getTable.js";
 
 // Insert or update a class entry
 export function createClassEntry(db, classData) {
-  db.run(
-    `INSERT INTO classData (subjectID, classID, className)
-     VALUES (?, ?, ?)
-     ON CONFLICT(subjectID, classID)
-     DO UPDATE SET className = excluded.className;`,
-    classData
-  );
+  db.run(`INSERT INTO classData (subjectID, classID, className) VALUES (?, ?, ?)
+        ON CONFLICT(subjectID, classID)
+        DO UPDATE SET
+        className = excluded.className,
+        timeStamp = excluded.timeStamp
+        WHERE classData.timeStamp != excluded.timeStamp;`, classData);
 }
 
 // Get all classes for a subject
