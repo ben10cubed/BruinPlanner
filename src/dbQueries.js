@@ -78,8 +78,7 @@ export function createSectionEntry(db, sectionData) {
             location = excluded.location,
             units = excluded.units,
             instructor = excluded.instructor,
-            timeStamp = excluded.timeStamp
-            WHERE sectionData.timeStamp != excluded.timeStamp;`, sectionData);
+            timeStamp = excluded.timeStamp;`, sectionData);
 }
 
 // Refactored helper function for retrieving table data (getter functions)
