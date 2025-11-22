@@ -14,8 +14,8 @@ export async function testHasConflicts() {
     const db = new SQL.Database(fileBuffer);
 
     const sched = {
-        'MATH+31A': [ '3', '3F' ],
-        'MATH+32A': [ '4', '4B' ],
+        'MATH+31A': [ '1', '1A' ],
+        'MATH+32A': [ '1', '1B' ],
         'MATH+131BH': [ '1', '1A' ]
     };
 

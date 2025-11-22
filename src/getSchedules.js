@@ -1,6 +1,8 @@
 //Assumes db already exists
 
-import { getSectionDay, getSectionTime, getSections, getSectionAvail, getClassEntries } from "./dbQueries.js"
+import { fetchCourse } from "./getLectures.js";
+import { getClassData } from "./getClassData.js";
+import { getSectionDay, getSectionTime, getSections, getSectionAvail, getClassEntries, createSectionEntry, updateSectionEntry, sectionExists } from "./dbQueries.js";
 
 const strToDay = {
     "M": 0,
@@ -12,11 +14,11 @@ const strToDay = {
     "U": 6
 }
 
-function filterAvailable(db, subjectID, classID, courseData) { //returns new courseData array with only available lectures and discussions
+async function filterAvailable(db, subjectID, classID, courseData) { //returns new courseData array with only available lectures and discussions
     const newCourseData = []
     for(var data of courseData) {
         let sectionID = data['sectionID'];
-        let avail = getSectionAvail(db, subjectID, classID, sectionID);
+        let avail = await getSectionAvail(db, subjectID, classID, sectionID);
         //console.log(avail);
         if(avail == 'O') {
             //console.log(data);
@@ -122,7 +124,7 @@ function hasOverlap(time1, time2) {
     return false;
 }
 
-function hasConflicts(db, sched) {
+async function hasConflicts(db, sched) {
     const daysArr = new Array(7);
     for(let i = 0; i < 7; i++) {
         daysArr[i] = [];
@@ -131,15 +133,15 @@ function hasConflicts(db, sched) {
     for (const [courseID, sectionList] of Object.entries(sched)) {
         let [subjectID, classID] = parseCourseID(courseID);
         for(let sectionID of sectionList) {
-            if(sectionID.length == 1) {
+            if(isLecture(sectionID)) {
                 sectionID = "Lec "+sectionID;
             } else {
                 sectionID = "Dis "+sectionID;
             }
-            let daysStr = getSectionDay(db, subjectID, classID, sectionID);
+            let daysStr = await getSectionDay(db, subjectID, classID, sectionID);
             let days = getDays(daysStr);
 
-            let timesStr = getSectionTime(db, subjectID, classID, sectionID);
+            let timesStr = await getSectionTime(db, subjectID, classID, sectionID);
             let times = getTimes(timesStr);
 
             for(let i = 0; i < days.length; i++) {
@@ -147,8 +149,8 @@ function hasConflicts(db, sched) {
                 let time = times[i];
                 for(const otherTime of daysArr[day]) {
                     if(hasOverlap(time, otherTime)) {
-                        // console.log(time);
-                        // console.log(otherTime);
+                        //console.log(time);
+                        //console.log(otherTime);
                         return true;
                     }
                 }
@@ -168,6 +170,65 @@ function cutSectionID(str) {
     return str.substring(index+1);
 }
 
+async function saveCourses(db, courses, term) {
+    for(let course of courses) {
+        let subjectID = course[0];
+        let classID = course[1];
+        const lectureHTML = await fetchCourse(subjectID, classID, term);
+        const lectureSections = getClassData(lectureHTML, subjectID, classID);
+        if(lectureHTML.includes("No results available based off your filter criteria.")) continue;
+
+        for(let lectureSection of lectureSections) {
+            let lectureID = lectureSection[3];
+            let lectureNum = parseInt(cutSectionID(lectureID));
+            let lectureExists = await sectionExists(db, subjectID, classID, lectureSection[3]);
+            if(!lectureExists) { //if lecture isn't already stored in the database, create new entries
+                await createSectionEntry(db, lectureSection);
+                const classHTML = await fetchCourse(subjectID, classID, term, lectureNum);
+                if (!classHTML || classHTML.includes("No results available based off your filter criteria")) continue;
+                const sections = getClassData(classHTML, subjectID, classID);
+
+                if (!sections || sections.length === 0) continue;
+
+                for (const section of sections) {
+                    //console.log(section);
+                    if (!section[3] || section[3].trim() === "") {  // sectionID is index 3
+                        console.log("Skipping section with empty sectionID:", section);
+                        continue;
+                    }
+
+                    await createSectionEntry(db, section);
+                }
+            } else { //if lecture is already stored, just change the status/number of spots
+                await updateSectionEntry(db, lectureSection);
+                const classHTML = await fetchCourse(subjectID, classID, term, lectureNum);
+                if (!classHTML || classHTML.includes("No results available based off your filter criteria")) continue;
+                const sections = getClassData(classHTML, subjectID, classID);
+
+                if (!sections || sections.length === 0) continue;
+
+                for (const section of sections) {
+                    let discussionID = section[3];
+                    if (!discussionID || discussionID.trim() === "") {  // sectionID is index 3
+                        console.log("Skipping section with empty sectionID:", section);
+                        continue;
+                    }
+                    let discussionExists = await sectionExists(db, subjectID, classID, discussionID);
+                    if(discussionExists) {
+                        await updateSectionEntry(db, section);
+                    } else {
+                        await createSectionEntry(db, section);
+                    }
+                }
+            }
+        }
+    }
+}
+
+function isLecture(sectionID) {
+    return !(/[A-Z]/.test(sectionID[sectionID.length-1]));
+}
+
 /**
  * Fetches all class data for all subjects in a given term.
  * @param {string} term - UCLA term code (e.g., "26W").
@@ -181,22 +242,25 @@ export async function getSchedules(db, courses, term="26W") {
 
     const numCourses = courses.length;
 
+    await saveCourses(db, courses, term);
+
     for(let course of courses) {
         let subjectID = course[0];
         let classID = course[1];
         let courseID = subjectID+'+'+classID;
         courseMap[courseID] = [];
-        const courseData = getSections(db, subjectID, classID);
-        const newCourseData = filterAvailable(db, subjectID, classID, courseData);
+        const courseData = await getSections(db, subjectID, classID);
+        const newCourseData = await filterAvailable(db, subjectID, classID, courseData);
+
         for(let course of newCourseData) {
-            let sectionID = cutSectionID(course['sectionID'])
-            if(sectionID.length == 1) {
+            let sectionID = cutSectionID(course['sectionID']);
+            if(isLecture(sectionID)) {
                 courseMap[courseID].push([sectionID, []]);
             }
         }
         for(let section of newCourseData) {
             let sectionID = cutSectionID(section['sectionID']);
-            if(sectionID.length == 2) {
+            if(!isLecture(sectionID)) {
                 for(let i = 0; i < courseMap[courseID].length; i++) {
                     if(courseMap[courseID][i][0] == sectionID[0]) {
                         courseMap[courseID][i][1].push(sectionID);
@@ -214,11 +278,10 @@ export async function getSchedules(db, courses, term="26W") {
     // }
 
     let possibilities = getAllPossibilities(courseMap);
-    //console.log(possibilities);
 
     const validSchedules = [];
     for(let poss of possibilities) {
-        if(!hasConflicts(db, poss)) {
+        if(!(await hasConflicts(db, poss))) {
             validSchedules.push(poss);
         }
     }
