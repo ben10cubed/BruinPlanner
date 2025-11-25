@@ -251,6 +251,81 @@ h2, h3, h4 {
   border-radius: 6px;
 }
 
+/* Container for dropdown results */
+/* Entire page container */
+.main-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Top bar for logout button */
+.top-bar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 20px;
+}
+
+/* Logout button styling */
+.logout-btn {
+  padding: 8px 16px;
+  background: #222;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.logout-btn:hover {
+  background: #444;
+}
+
+/* Search panel centered at top */
+.search-panel {
+  position: relative;
+  width: 500px;        /* increased width */
+  margin: 40px auto;   /* center horizontally & move upward */
+  text-align: left;
+}
+
+/* Larger search input */
+.subject-input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;      /* bigger text */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Dropdown box styling */
+.dropdown {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 4px;
+  z-index: 999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Dropdown items */
+.dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+
+
 @media (max-width: 900px) {
   .main-container {
     flex-direction: column;

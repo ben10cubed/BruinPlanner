@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./App.css";
 
-import {
-  initDB,
-  createSubjectEntry,
-  searchSubjectArea,
-  searchClass,
-  getClassEntries,
-} from "./dbQueries.js";
+/* ============================================================
+   Helper functions for formatting + transforming raw DB rows
+   ============================================================
+*/
 
-import { getSubjectID } from "./getSubjectID.js";
-
-/* ------------------------- Helper functions ------------------------- */
-
+//Fix this, need all 7 days
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const START_HOUR = 8;
 const END_HOUR = 20;
 
+/**
+ * Input format: M|W|F -> Split and push days
+ */
 function normalizeDays(dayStr) {
   if (!dayStr) return [];
   const parts = dayStr.split("|");
@@ -30,23 +27,35 @@ function normalizeDays(dayStr) {
       if (ch === "F") res.push("Fri");
     }
   }
+  // allow duplicates!!!
+  // W|W|W => this is valid
   return [...new Set(res)];
 }
 
+/** Convert "1300" → "13:00" */
 function toHHMM(numStr) {
   if (!numStr) return "";
   const s = numStr.padStart(4, "0");
   return `${s.slice(0, 2)}:${s.slice(2)}`;
 }
 
+/**
+ * Converts a DB "row" for a given section into a consistent
+ * "section object" with id, label, days[], start/end, location, etc.
+ * Each course's section is uniquely identified by:
+ *     subjectID-classID-sectionID
+ */
 function sectionRowToSection(subjectID, classID, className, row) {
   const rawDay = row.day;
   const rawTime = row.time;
   let start = "";
   let end = "";
 
+  // SOC returns times like "0800-0950" or "0800-0950|1000-1050".
+  // If time is "TBD", skip it.
+  // BUGGED
   if (rawTime && !rawTime.toLowerCase().includes("tbd")) {
-    const first = rawTime.split("|")[0];
+    const first = rawTime.split("|")[0]; // take first meeting time only
     const [s, e] = first.split("-");
     start = toHHMM(s);
     end = toHHMM(e);
@@ -64,59 +73,29 @@ function sectionRowToSection(subjectID, classID, className, row) {
   };
 }
 
-/* ------------------------- Main App ------------------------- */
+/* ============================================================
+   App Component — handles DB init + login page switch
+   ============================================================
+*/
 
 export default function App() {
   const [page, setPage] = useState("login");
-  const [db, setDb] = useState(null);
-  const [loadingDb, setLoadingDb] = useState(true);
-  const [dbError, setDbError] = useState(null);
-
-  // Initialize DB + load subjects
-useEffect(() => {
-  (async () => {
-    try {
-      console.log("Starting app init…");
-      const dbInstance = await initDB();
-      console.log("DB initialized OK");
-
-      const subjects = await getSubjectID("26W");
-      console.log("Fetched subjects:", subjects.length);
-      console.log("First subject:", subjects[0]);
-
-      for (const subj of subjects) {
-        // subj = { subjectID, subjectName }
-        createSubjectEntry(dbInstance, [subj.subjectID, subj.subjectName]);
-      }
-      console.log("Inserted subjects into DB");
-
-      setDb(dbInstance);
-    } catch (e) {
-      console.error("Startup error:", e);
-      setDbError(`Failed to initialize DB: ${e.message || e}`);
-    } finally {
-      setLoadingDb(false);
-    }
-  })();
-}, []);
-
-
-  if (loadingDb) return <div>Loading database...</div>;
-  if (dbError) return <div>{dbError}</div>;
 
   return (
     <div>
       {page === "login" ? (
         <LoginPage onLogin={() => setPage("main")} />
       ) : (
-        <MainPage db={db} />
+        <MainPage onLogout={() => setPage("login")} />
       )}
     </div>
   );
 }
 
-/* ------------------------- Login Page ------------------------- */
-
+/* ============================================================
+   Login Page (dummy)
+   ============================================================
+*/
 function LoginPage({ onLogin }) {
   return (
     <div className="login-card">
@@ -127,98 +106,144 @@ function LoginPage({ onLogin }) {
   );
 }
 
-/* ------------------------- Main Page ------------------------- */
+/* ============================================================
+   SUBJECT SEARCH — Database-free frontend,
+   uses backend-loaded static subject list
+   ============================================================ */
 
-function MainPage({ db }) {
+function MainPage({ onLogout }) {
+  // The entire subject list fetched once from backend
+  const [allSubjects, setAllSubjects] = useState([]);
+  // User's input in subject search field
   const [subjectQuery, setSubjectQuery] = useState("");
+  // Filtered auto-complete results
   const [subjectResults, setSubjectResults] = useState([]);
+  // The chosen subject object { subjectID, subjectName }
   const [selectedSubject, setSelectedSubject] = useState(null);
+  // Prevent program to search immediately after a subject is chosen
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  const [allClasses, setAllClasses] = useState([]);
   const [classQuery, setClassQuery] = useState("");
-  const [courseResults, setCourseResults] = useState([]);
-  const [selectedSections, setSelectedSections] = useState([]);
+  const [classResults, setClassResults] = useState([]);
 
-  /* --- Subject autocomplete search --- */
+  /* -------------------------------------------------------------
+     Fetch ALL SUBJECTS once, when MainPage loads.
+  ------------------------------------------------------------- */
   useEffect(() => {
-    if (!db) return;
+    async function loadSubjects() {
+      try {
+        const res = await fetch("/api/subjects");
 
-    const q = subjectQuery.trim().toUpperCase();
-    if (!q) {
-      setSubjectResults([]);
+        if (!res.ok) {
+          console.error(`Backend responded but with HTTP ${res.status}`);
+          return;
+        }
+
+        const data = await res.json();
+        setAllSubjects(data);
+
+      } catch (err) {
+        const msg = String(err.message || "");
+        // Catches error if backend is off
+        if (msg.includes("Failed to fetch")) {
+          console.log(
+            "%c[Frontend] Backend not running (ECONNREFUSED by proxy)",
+            "color: orange"
+          );
+        } else {
+          console.error("[Frontend] Unexpected fetch error:", err);
+        }
+      }
+    }
+    loadSubjects();
+  }, []);
+  /* -------------------------------------------------------------
+     Frontend-only search algorithm.
+  ------------------------------------------------------------- */
+  useEffect(() => {
+    if (isSelecting) return; // prevent dropdown reopening after selection
+
+    const text = subjectQuery.trim().toUpperCase();
+
+    if (!text) {
+      setSubjectResults(allSubjects);
       return;
     }
 
-    try {
-      const rows = searchSubjectArea(db, q); // matches subject IDs
-      setSubjectResults(rows);
-    } catch (e) {
-      console.error(e);
-      setSubjectResults([]);
-    }
-  }, [subjectQuery, db]);
-
-  /* --- Class search inside selected subject --- */
-  useEffect(() => {
-    if (!db || !selectedSubject) {
-      setCourseResults([]);
-      return;
-    }
-
-    const sTerm = classQuery.trim().toUpperCase();
-
-    try {
-      const rows = searchClass(db, selectedSubject.subjectID, sTerm);
-
-      const formatted = rows.map((cls) => {
-        const entries = getClassEntries(db, cls.subjectID, cls.classID);
-        const sections = entries.map((row) =>
-          sectionRowToSection(cls.subjectID, cls.classID, cls.className, row)
-        );
-
-        return {
-          id: `${cls.subjectID}-${cls.classID}`,
-          subject: cls.subjectID,
-          number: cls.classID,
-          title: cls.className,
-          sections,
-        };
-      });
-
-      setCourseResults(formatted);
-    } catch (e) {
-      console.error(e);
-      setCourseResults([]);
-    }
-  }, [classQuery, selectedSubject, db]);
-
-  /* --- Add/remove timetable sections --- */
-  const addSection = (sec) => {
-    setSelectedSections((prev) =>
-      prev.some((s) => s.id === sec.id) ? prev : [...prev, sec]
+    const filtered = allSubjects.filter(subj =>
+      subj.subjectName.toUpperCase().includes(text)
     );
-  };
 
-  const removeSection = (id) => {
-    setSelectedSections((prev) => prev.filter((s) => s.id !== id));
-  };
+    setSubjectResults(filtered);
+  }, [subjectQuery, allSubjects, isSelecting]);
+  /* -------------------------------------------------------------
+     When user clicks on one subject from dropdown
+  ------------------------------------------------------------- */
+  async function handleSubjectSelect(subj) {
+    setIsSelecting(true); // prevent search from running
+    setSelectedSubject(subj);
+    setSubjectQuery(subj.subjectName);
+    setSubjectResults([]);
+    try {
+      const res = await fetch(`/api/classes?subject=${encodeURIComponent(subj.subjectID)}`);
 
-  const clearAll = () => setSelectedSections([]);
+      if (!res.ok) {
+        console.error("Failed to load classes:", res.status);
+        return;
+      }
 
+      const data = await res.json();
+      setAllClasses(
+        data.map(cls => ({
+          ...cls,
+          full: `${cls.classID} - ${cls.className}`
+        }))
+      );
+      setClassQuery("");         // reset class search
+      setClassResults([]);
+
+    } catch (err) {
+      console.error("Error fetching classes:", err);
+    }
+  }
+  
+  useEffect(() => {
+    const text = classQuery.trim().toUpperCase();
+
+    if (!text) {
+      setClassResults(allClasses);
+      return;
+    }
+
+    const filtered = allClasses.filter(cls =>
+      cls.full.toUpperCase().includes(text)
+    );
+
+    setClassResults(filtered.slice(0, 8));
+
+  }, [classQuery, allClasses]);
   return (
     <div className="main-container">
-      {/* Left Panel */}
-      <div className="search-panel">
-        <h2>Class Search</h2>
 
-        {/* SUBJECT INPUT */}
+      {/* NEW: top navigation bar */}
+      <div className="top-bar">
+        <button className="logout-btn" onClick={onLogout}>Logout</button>
+      </div>
+
+      <div className="search-panel">
+        <h2>Subject Search</h2>
+
         <label>Subject ID</label>
         <input
+          className="subject-input"
           value={subjectQuery}
+          placeholder="e.g. COM SCI, MATH"
           onChange={(e) => {
+            setIsSelecting(false);
             setSubjectQuery(e.target.value);
             setSelectedSubject(null);
-            setCourseResults([]);
           }}
-          placeholder="e.g. COM SCI, MATH"
         />
 
         {subjectResults.length > 0 && (
@@ -227,108 +252,74 @@ function MainPage({ db }) {
               <div
                 key={s.subjectID}
                 className="dropdown-item"
-                onClick={() => {
-                  setSelectedSubject(s);
-                  setSubjectQuery(`${s.subjectID} – ${s.subjectName}`);
-                  setSubjectResults([]);
-                }}
+                onMouseDown={() => handleSubjectSelect(s)}
               >
-                <strong>{s.subjectID}</strong> — {s.subjectName}
+                {s.subjectName}
               </div>
             ))}
           </div>
         )}
+      </div>
+      {/* CLASS SEARCH PANEL */}
+      <div className="class-search-panel">
+        <h3>Class Search</h3>
 
-        {/* CLASS INPUT */}
-        <label>Class (Number or Title)</label>
+        <label>Class ID</label>
         <input
           value={classQuery}
-          onChange={(e) => setClassQuery(e.target.value)}
-          disabled={!selectedSubject}
-          placeholder="e.g. 31 or Linear Algebra"
+          placeholder="e.g. 31, 151B, 003, 132"
+          onChange={(e) => {
+            setClassQuery(e.target.value);
+          }}
+          className="class-input"
         />
 
-        <div className="search-results">
-          <h4>Search Results</h4>
-
-          {selectedSubject && courseResults.length === 0 && (
-            <p>No matching classes.</p>
-          )}
-
-          {courseResults.map((c) => (
-            <div key={c.id} className="course-card">
-              <strong>
-                {c.subject} {c.number}
-              </strong>{" "}
-              — {c.title}
-              <div style={{ marginLeft: "10px", marginTop: "4px" }}>
-                {c.sections.map((sec) => (
-                  <div
-                    key={sec.id}
-                    className="section-row"
-                  >
-                    <span>
-                      {sec.label}: {sec.days.join(", ")} {sec.start}-{sec.end}
-                      {sec.location ? ` @ ${sec.location}` : ""}
-                    </span>
-                    <button onClick={() => addSection(sec)}>
-                      Add
-                    </button>
-                  </div>
-                ))}
+        {classResults.length > 0 && (
+          <div className="dropdown">
+            {classResults.map((c) => (
+              <div key={c.classID} className="dropdown-item">
+                {c.full}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Right Panel */}
-      <div className="selection-panel">
-        <h3>Timetable Preview</h3>
-
-        <Timetable sections={selectedSections} />
-
-        <div className="selection-list">
-          <div className="list-header">
-            <strong>Selected Sections</strong>
-            <button onClick={clearAll}>Clear</button>
+            ))}
           </div>
-
-          {selectedSections.length === 0 && <p>None yet.</p>}
-
-          {selectedSections.map((s) => (
-            <div key={s.id} className="selected-item">
-              <span>
-                {s.courseId} {s.label} — {s.start}-{s.end}
-              </span>
-              <button onClick={() => removeSection(s.id)}>X</button>
-            </div>
-          ))}
-        </div>
+        )}
       </div>
+
     </div>
   );
 }
 
-/* ------------------------- Timetable Component ------------------------- */
+
+/* ============================================================
+   Timetable Component
+   ============================================================
+   Renders colored blocks for each section on each day.
+   Uses useMemo to assign consistent colors per course.
+*/
 
 function Timetable({ sections }) {
+  // Assign a persistent unique color PER COURSE
   const colorMap = useMemo(() => {
     const colors = [
       "#2563eb", "#16a34a", "#dc2626", "#eab308", "#9333ea",
       "#f97316", "#0ea5e9", "#10b981", "#d946ef", "#f43f5e"
     ];
+
     const map = new Map();
     let idx = 0;
+
     sections.forEach((s) => {
       const key = s.courseId;
       if (!map.has(key)) map.set(key, colors[idx++ % colors.length]);
     });
+
     return map;
   }, [sections]);
 
   return (
     <div className="timetable">
+
+      {/* For each section, create a block for EACH DAY it meets */}
       {sections.map((sec) =>
         sec.days.map((day) => {
           const color = colorMap.get(sec.courseId);
@@ -337,7 +328,7 @@ function Timetable({ sections }) {
               key={`${sec.id}-${day}`}
               className="time-block"
               style={{
-                background: `${color}33`,
+                background: `${color}33`, // transparent version
                 borderColor: color,
               }}
             >
@@ -349,6 +340,7 @@ function Timetable({ sections }) {
           );
         })
       )}
+
     </div>
   );
 }

@@ -29,14 +29,16 @@ export default function classesRoute(db) {
 
         const scraped = await getClassID(term, subject);
 
-        // 3️⃣ Insert scraped classes
-        scraped.forEach((c) =>
+        // Insert scraped classes
+        // Fix bug of not returning subject on first run.
+        scraped.forEach((c) => {
             createClassEntry(db, [
                 subject,
                 c.classID,
                 c.className
-            ])
-        );
+            ]);
+            c.subject = subject;
+       });
 
         return res.json(scraped);
       } //To update, we can add an else statement here and check time.

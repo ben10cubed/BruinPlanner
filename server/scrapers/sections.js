@@ -458,7 +458,7 @@ export async function getSectionInfo(subjectID, classID) {
 
     if (classDiscussionData.length == 0) {
         //Try to fetch with different seqNum
-        distHTML = await fetchCourse(subjectID, classID, term, i, null);
+        disHTML = await fetchCourse(subjectID, classID, term, i, null);
         classDiscussionData = getClassData(disHTML, subjectID, classID, i);
     }
 
