@@ -6,14 +6,14 @@ import { getClassData } from "../getClassData.js";
 
 async function test() {
 
-    const subject = "MATH";     // Subject code (as it appears online, e.g. "COM SCI")
-    const courseID = "31A";     // Course number
+    const subject = "COM SCI";     // Subject code (as it appears online, e.g. "COM SCI")
+    const courseID = "143";     // Course number
     const term = "26W";         // UCLA term code (e.g., "26W")
 
     console.log(`Fetching course info for: ${subject} ${courseID}, term ${term}`);
 
     try {
-        const html = await fetchCourse(subject, courseID, term, 2);
+        const html = await fetchCourse(subject, courseID, term);
 
         if (!html) {
             console.log("❌ No data returned.");

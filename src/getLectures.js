@@ -137,18 +137,25 @@ async function fetchLectures(subject_code, course_ID, term) {
     }
 }
 
-function generateCourseCode(subjectID, courseID) { //ex: MATH0031A
+function generateCourseCode(subjectID, courseID) {
+    // Remove all spaces from subjectID
+    subjectID = subjectID.replace(/\s+/g, "");
+
     // Extract numeric part and letter part
     const match = courseID.match(/^(\d+)([A-Z]*)$/i);
     if (!match) throw new Error("Invalid courseID format");
 
     let [_, numPart, letterPart] = match;
+
     // Pad numeric part to 4 digits
     numPart = numPart.padStart(4, '0');
+
+    // Return concatenated course code
     return subjectID + numPart + letterPart.toUpperCase();
 }
 
 function extractLectureIDs(html, courseCode) {
+    console.log(courseCode);
     const regex = new RegExp(`id="(\\d+)_${courseCode}"`, 'g');
     const ids = [];
     let match;
@@ -159,6 +166,9 @@ function extractLectureIDs(html, courseCode) {
 }
 
 async function fetchDiscussions(subject_code, course_ID, term, lecture_num) {
+    if(lecture_num >= 10) {
+        lecture_num = 1;
+    }
     // Fetch the main lectures HTML
     const lectureHTML = await fetchLectures(subject_code, course_ID, term);
 
@@ -167,6 +177,8 @@ async function fetchDiscussions(subject_code, course_ID, term, lecture_num) {
 
     // Extract lecture IDs from the HTML
     const ids = extractLectureIDs(lectureHTML, courseCode);
+
+    //console.log(ids);
     
     if (!ids || ids.length === 0) {
         console.warn(`No lecture IDs found for ${courseCode}`);

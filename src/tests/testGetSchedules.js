@@ -21,7 +21,7 @@ export async function testSchedules(term = "26W") {
     const courses = [
         ['MATH', '31A'],
         ['MATH', '32A'],
-        ['MATH', '131BH']
+        ['COM SCI', '143']
     ];
 
     // Get schedules

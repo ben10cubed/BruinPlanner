@@ -67,6 +67,9 @@ function getAllPossibilities(courseMap) {
 }
 
 function getDays(str) {
+    if(str == "") {
+        return [];
+    }
     const days = [];
     let day = "";
     let index = 0;
@@ -124,6 +127,10 @@ function hasOverlap(time1, time2) {
     return false;
 }
 
+function isValidDays(str) {
+    return /^[MTWRFSU|]*$/.test(str);
+}
+
 async function hasConflicts(db, sched) {
     const daysArr = new Array(7);
     for(let i = 0; i < 7; i++) {
@@ -139,14 +146,21 @@ async function hasConflicts(db, sched) {
                 sectionID = "Dis "+sectionID;
             }
             let daysStr = await getSectionDay(db, subjectID, classID, sectionID);
+            if(!isValidDays(daysStr)) {
+                daysStr = "";
+            }
             let days = getDays(daysStr);
+            console.log(days);
+            console.log(days.length);
 
             let timesStr = await getSectionTime(db, subjectID, classID, sectionID);
+            //console.log(timesStr);
             let times = getTimes(timesStr);
 
             for(let i = 0; i < days.length; i++) {
                 let day = strToDay[days[i]];
                 let time = times[i];
+                console.log(day + " " + daysArr[day]);
                 for(const otherTime of daysArr[day]) {
                     if(hasOverlap(time, otherTime)) {
                         //console.log(time);
@@ -258,6 +272,7 @@ export async function getSchedules(db, courses, term="26W") {
                 courseMap[courseID].push([sectionID, []]);
             }
         }
+
         for(let section of newCourseData) {
             let sectionID = cutSectionID(section['sectionID']);
             if(!isLecture(sectionID)) {
@@ -270,6 +285,7 @@ export async function getSchedules(db, courses, term="26W") {
             }
         }
     }
+    console.log(courseMap);
 
     // const courseKeys = Object.keys(courseMap);
     // for(let course of courseKeys) {
