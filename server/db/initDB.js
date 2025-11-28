@@ -7,7 +7,8 @@ export async function initDB() {
 
     db.run(`CREATE TABLE IF NOT EXISTS subjectData (
         subjectID TEXT PRIMARY KEY,
-        subjectName TEXT
+        subjectName TEXT,
+        timeStamp TEXT DEFAULT (strftime('%Y-%m-%d', 'now'))
         );`);
 
           //Table for subjectID and classID mapping
@@ -15,6 +16,7 @@ export async function initDB() {
         subjectID TEXT,
         classID TEXT,
         className TEXT,
+        timeStamp TEXT DEFAULT (strftime('%Y-%m-%d %H', 'now')),
         PRIMARY KEY (subjectID, classID)
         );`);
   
@@ -33,6 +35,7 @@ export async function initDB() {
         location TEXT,
         units TEXT,
         instructor TEXT,
+        timeStamp TEXT DEFAULT (strftime('%Y-%m-%d %H', 'now')),
         PRIMARY KEY (subjectID, classID, sectionID)
         );`);
   return db;

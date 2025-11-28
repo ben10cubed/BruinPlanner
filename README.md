@@ -6,11 +6,15 @@
 3. the actual getSubject is modified so it fetches the api instead of handling the actual fetching
 4. removed the "default" timetable, now only generates when the class is selected
 
+TODO:
+Sort out the different package.json files.
+Get frontend to call backend APIs.
+
 To run:
 
 start server
 
-cd ~/BruinPlanner
+cd ~/BruinPlanner/server
 node server.js
 
 on one terminal window,

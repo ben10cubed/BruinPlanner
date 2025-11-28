@@ -2,11 +2,12 @@ import { getTable } from "../utils/getTable.js";
 
 // Insert a subject
 export function createSubjectEntry(db, subjectData) {
-  db.run(
-    `INSERT INTO subjectData (subjectID, subjectName)
-     VALUES (?, ?);`,
-    subjectData
-  );
+  db.run(`INSERT INTO subjectData (subjectID, subjectName) VALUES (?, ?)
+        ON CONFLICT(subjectID)
+        DO UPDATE SET
+        subjectName = excluded.subjectName,
+        timeStamp = excluded.timeStamp
+        WHERE subjectData.timeStamp != excluded.timeStamp;`, subjectData);
 }
 
 // Get all subjects
