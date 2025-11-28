@@ -443,23 +443,40 @@ async function fetchCourse(subject_code, course_ID, term="26W", lecture_num=null
     }
 }
 
-export async function getSectionInfo(subjectID, classID) {
+//className is only useful for FIAT LX 19 special case classes
+export async function getSectionInfo(subjectID, classID, className="") {
+  if (!subjectID || !classID) {
+    return [];
+  } 
+
+  const tmp_fiat_ID = classID;
+  if (subjectID === "FIAT LX" && classID.includes("19")) {
+    classID = "19";
+  }
+
   const term = "26W";
 
   const courseData = await fetchCourse(subjectID, classID, term);
-  const allClassData = getClassData(courseData, subjectID, classID);
+  const allClassData = getClassData(courseData, subjectID, tmp_fiat_ID);
 
   let discussionData = [];
-
   for (let i = 1; i <= allClassData.length; i++) {
+    if (subjectID === "FIAT LX" && classID === "19") {
+        //Name has to match the new fiatlx
+        if (allClassData[i-1][2].toLowerCase().includes(className.toLowerCase()) == false) {
+            continue;
+        }
+        discussionData.push(allClassData[i-1]);
+    }
+
     //Most common working fetching seqNum input
     let disHTML = await fetchCourse(subjectID, classID, term, i, "1");
-    let classDiscussionData = getClassData(disHTML, subjectID, classID, i);
+    let classDiscussionData = getClassData(disHTML, subjectID, tmp_fiat_ID, i);
 
     if (classDiscussionData.length == 0) {
         //Try to fetch with different seqNum
         disHTML = await fetchCourse(subjectID, classID, term, i, null);
-        classDiscussionData = getClassData(disHTML, subjectID, classID, i);
+        classDiscussionData = getClassData(disHTML, subjectID, tmp_fiat_ID, i);
     }
 
     if (classDiscussionData.length > 0) {
@@ -467,5 +484,9 @@ export async function getSectionInfo(subjectID, classID) {
     }
   }
 
+  if (subjectID === "FIAT LX" && classID.includes("19")) {
+    return discussionData
+  }
+  
   return [...allClassData, ...discussionData];
 }

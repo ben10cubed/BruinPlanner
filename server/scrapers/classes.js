@@ -15,6 +15,8 @@ export async function getClassID(term="26W", subjectID) {
   const splitParts = (name) => name.split(":").map(s => s.trim());
   const hasKeywordAnywhere = (name) => /lecture|seminar/i.test(name);
 
+  //Special processing for FIAT LX 19 due to duplicates that store completely different classes
+  let fiat19Count = 0;
   async function processText(text) {
     const regex = /aria-disabled="false">(.*?)</g;
     for (const match of text.matchAll(regex)) {
@@ -31,7 +33,17 @@ export async function getClassID(term="26W", subjectID) {
         // New course ID
         if (lastClassEntry) results.push(lastClassEntry);
         lastClassID = trimmedID;
-        lastClassEntry = { classID: trimmedID, className };
+        let finalClassID = trimmedID;
+
+        // Special handling for FIAT LX 19 duplicates
+        if (subjectID === "FIAT LX" && trimmedID === "19") {
+          fiat19Count++;
+          finalClassID = `19${String.fromCharCode(64 + fiat19Count)}`;  
+          lastClassID = finalClassID;
+          // 1 → A, 2 → B, 3 → C, etc.
+        }
+
+        lastClassEntry = { classID: finalClassID, className };
       } else {
         // Duplicate course ID → apply smart selection
         const prev = lastClassEntry.className;

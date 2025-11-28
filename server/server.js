@@ -5,7 +5,7 @@ import { initDB } from "./db/initDB.js";
 import subjectsRoute from "./routes/subjects.js";
 import classesRoute from "./routes/classes.js";
 import sectionRoute from "./routes/sections.js";
-
+import schedulesRoute from "./routes/schedules.js";
 
 
 const app = express();
@@ -17,5 +17,7 @@ const db = await initDB();
 app.use("/api/subjects", subjectsRoute(db));
 app.use("/api/classes", classesRoute(db));
 app.use("/api/sections", sectionRoute(db));
+app.use("/api/schedules", schedulesRoute(db));
+
 
 app.listen(3000, () => console.log("Server running on 3000"));

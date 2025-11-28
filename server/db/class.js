@@ -21,6 +21,16 @@ export function getClasses(db, subjectID) {
   return getTable(stmt);
 }
 
+export function getClassName(db, subjectID, classID) {
+  const stmt = db.prepare(`
+    SELECT className FROM classData
+    WHERE subjectID = '${subjectID}'
+      AND classID = '${classID}'
+    ORDER BY classID;
+  `);
+  return getTable(stmt);
+}
+
 export function getClassEntries(db, subjectID, classID) {
     const stmt = db.prepare(`SELECT enroll, sectionID, status, waitlist, info, day, time, location, units, instructor FROM sectionData WHERE subjectID = '${subjectID}' AND classID = '${classID}';`);
     const results = getTable(stmt);
