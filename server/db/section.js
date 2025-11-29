@@ -24,6 +24,37 @@ export function getSections(db, subjectID, classID){
     return results;
 }
 
+export function getSectionAll(db, subjectID, classID, sectionID, callback) {
+  try {
+    const stmt = db.prepare(`
+      SELECT *
+      FROM sectionData
+      WHERE subjectID = ?
+        AND classID = ?
+        AND sectionID = ?
+      LIMIT 1;
+    `);
+
+    stmt.bind([subjectID, classID, sectionID]);
+
+    let rows = getTable(stmt);
+
+    if (!rows || rows.length === 0) {
+      // no DB error — just no data
+      return callback(null, null);
+    }
+
+    return callback(null, rows[0]);  // success
+
+  } catch (err) {
+    // ANY unexpected SQL or parsing error goes here
+    console.error("DB error in getSectionAll:", err);
+    return callback(err, null);
+  }
+}
+
+
+
 //returns whether a section has already been stored in sectionData table
 export function sectionExists(db, subjectID, classID, sectionID) {
     const stmt = db.prepare(

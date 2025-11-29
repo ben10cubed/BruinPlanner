@@ -120,6 +120,13 @@ function hasOverlap(time1, time2) {
     return false;
 }
 
+function isNotScheduled(str) {
+  if (!str) return true;
+  const lowered = str.toLowerCase();
+  return (lowered.includes("not scheduled"));
+}
+
+
 async function hasConflicts(db, sched) {
     const daysArr = new Array(7);
     for(let i = 0; i < 7; i++) {
@@ -135,22 +142,28 @@ async function hasConflicts(db, sched) {
             //     sectionID = "Dis "+sectionID;
             // }
             let daysStr = await getSectionDay(db, subjectID, classID, sectionID);
-            let days = getDays(daysStr);
-
             let timesStr = await getSectionTime(db, subjectID, classID, sectionID);
+
+            // Skip not-scheduled meetings
+            if (isNotScheduled(daysStr) || isNotScheduled(timesStr)) {
+                continue;
+            }
+
+            let days = getDays(daysStr);
             let times = getTimes(timesStr);
+
 
             for(let i = 0; i < days.length; i++) {
                 let day = strToDay[days[i]];
                 let time = times[i];
-                for(const otherTime of daysArr[day]) {
-                    if(hasOverlap(time, otherTime)) {
+                for(const entry of daysArr[day]) {
+                    if(hasOverlap(time, entry.time) && entry.courseID !== courseID) {
                         //console.log(time);
                         //console.log(otherTime);
                         return true;
                     }
                 }
-                daysArr[day].push(time);
+                daysArr[day].push({time, courseID});
             }
         }
     }

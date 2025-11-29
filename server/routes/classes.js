@@ -32,12 +32,12 @@ export default function classesRoute(db) {
         // Insert scraped classes
         // Fix bug of not returning subject on first run.
         scraped.forEach((c) => {
+          c.subjectID = subject;
             createClassEntry(db, [
                 subject,
                 c.classID,
                 c.className
             ]);
-            c.subject = subject;
        });
 
         return res.json(scraped);

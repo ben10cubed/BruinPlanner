@@ -76,7 +76,6 @@ function getClassData(classHTML, subjectID, classID, lecture_num=null) {
             */
             for (const m of classHTML.matchAll(regexPatterns[i])) {
                 let trimmed_data = he.decode(m.groups.data.trim());
-                
                 if (trimmed_data.includes("button")) {
                     let trimmed_data = he.decode(m.groups.data.toLowerCase());
                     if (trimmed_data.includes("asynchronous")) {
@@ -250,16 +249,20 @@ function getClassData(classHTML, subjectID, classID, lecture_num=null) {
             allMatches[Column.DAY][entry][0] != 'N'){
             let dayParts = allMatches[Column.DAY][entry].split('|');    // Splits Day Column by | into a list
             let timeParts = allMatches[Column.TIME][entry].split('|');  // Splits Time Column by | into a list
+            let locationParts = allMatches[Column.LOCATION][entry].split('|');  // Splits Location Column by | into a list
             let newDayString = "";
             let newTimeString = "";
+            let newLocationString = "";
             for (let dayPart = 0; dayPart < dayParts.length; dayPart++){    // For each part of the Day Column (split by |)
                 for(const dayChar of dayParts[dayPart]){    // For each individual day in a single day part
                     newDayString += dayChar + "|";  // Separate each individual day by |
                     newTimeString += timeParts[dayPart] + "|";  // For each day, split its respective time by | as well
+                    newLocationString += locationParts[dayPart] + "|";  // For each day, split its respective location by | as well
                 }
             }
             allMatches[Column.DAY][entry] = newDayString.slice(0, -1);      // Update the day entry
             allMatches[Column.TIME][entry] = newTimeString.slice(0, -1);    // Update the time entry
+            allMatches[Column.LOCATION][entry] = newLocationString.slice(0, -1);    // Update the location entry
         }
     }
 
