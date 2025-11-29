@@ -13,66 +13,79 @@ h2, h3, h4 {
 }
 
 /* ===== Layout Containers ===== */
-.main-container {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  padding: 16px;
-}
-
-/* ===== Left Panel: Class Search ===== */
-.class-search {
-  flex: 1;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  padding: 16px;
-}
-
-.class-search h2 {
-  margin-bottom: 12px;
-}
-
-.search-box {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 14px;
-  background: #fdfdfd;
-}
-
-.search-box label {
-  font-size: 11px;
-  color: #475569;
-  display: block;
-  margin-bottom: 2px;
-}
-
-.search-box input {
+.main-container,
+.page-container {
+  position: relative;
   width: 100%;
-  padding: 6px 8px;
-  font-size: 13px;
-  border: 1px solid #d1d5db;
-  border-radius: 5px;
-  margin-bottom: 6px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.search-results {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 12px;
+/* Logout button */
+.logout-btn {
+  padding: 8px 16px;
+  background: #222;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.logout-btn:hover {
+  background: #444;
+}
+
+
+.input-box,
+.subject-input,
+.class-input {
+  width: 95%;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+}
+.subject-input:focus,
+.class-input:focus,
+.input-box:focus {
+  outline: 2px solid #0077ff;
+  border-color: #0077ff;
+}
+
+/* ===== Dropdown ===== */
+.dropdown {
+  position: absolute;
   background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 89%;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 4px;
+  z-index: 999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+.dropdown-item {
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.dropdown-item:hover {
+  background: #eef2ff;
+}
+
+
+
+
+
+/* ===== Course Items ===== */
 .course-item {
   border-bottom: 1px solid #f3f3f3;
   padding-bottom: 6px;
   margin-bottom: 8px;
 }
-
 .course-item strong {
   color: #003b8e;
 }
@@ -94,135 +107,12 @@ h2, h3, h4 {
   cursor: pointer;
   transition: background 0.2s;
 }
-
 .add-btn:hover {
   background: #1d4ed8;
 }
 
-/* ===== Right Panel: Timetable + Selected ===== */
-.right-panel {
-  flex: 1;
-}
-
-/* ===== Timetable Container ===== */
-.timetable-container {
-  width: 100%;
-  max-width: 1100px;
-  border-radius: 10px;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  padding: 12px 18px 18px;
-}
-
-/* Day Headers */
-.timetable-header {
-  display: grid;
-  grid-template-columns: 70px repeat(5, 1fr);
-  text-align: center;
-  font-weight: 600;
-  color: #003b8e;
-  margin-bottom: 4px;
-}
-
-.day-header {
-  border-bottom: 1px solid #e5e7eb;
-  padding: 4px 0;
-}
-
-/* Grid Layout */
-.timetable-grid {
-  display: grid;
-  position: relative;
-  width: 100%;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #fff;
-  grid-auto-flow: dense;
-
-  /* Keep consistent size, even when empty */
-  min-height: 700px;
-  min-width: 650px; /* ✅ ensures day columns don’t collapse */
-  height: auto;
-  overflow: hidden;
-
-  /* Fix the column widths explicitly */
-  grid-template-columns: 70px repeat(5, minmax(120px, 1fr)); 
-  grid-template-rows: repeat(48, 1fr); /* 15-min slots */
-}
 
 
-/* Background grid cells */
-.grid-cell {
-  border-top: 1px solid #f1f5f9;
-  border-left: 1px solid #f1f5f9;
-}
-
-/* Time labels */
-.time-label {
-  text-align: right;
-  padding-right: 6px;
-  font-size: 11px;
-  color: #64748b;
-  line-height: 1.2;
-}
-
-/* ===== Class Block ===== */
-.timetable-block {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  padding: 4px 6px;
-  border: 1px solid;
-  border-radius: 6px;
-  background-clip: padding-box;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 11px;
-  font-weight: 500;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  transition: transform 0.1s ease;
-}
-
-.timetable-block:hover {
-  transform: scale(1.02);
-  z-index: 5;
-}
-
-/* Inside text */
-.block-title {
-  font-weight: 700;
-  font-size: 11.5px;
-}
-
-.block-label,
-.block-time,
-.block-loc {
-  font-weight: 500;
-  font-size: 10.5px;
-}
-
-/* ===== Selected Sections ===== */
-.selected-sections {
-  margin-top: 10px;
-  padding: 8px;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  background: white;
-  font-size: 11.5px;
-}
-
-.selected-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.selected-item {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-}
 
 .clear-btn,
 .remove-btn {
@@ -235,24 +125,24 @@ h2, h3, h4 {
   cursor: pointer;
   transition: background 0.2s;
 }
-
 .clear-btn:hover,
 .remove-btn:hover {
   background: #1d4ed8;
 }
 
-/* ===== Scroll & Responsiveness ===== */
+/* ===== Scrollbars ===== */
 .search-results::-webkit-scrollbar {
   width: 6px;
 }
-
 .search-results::-webkit-scrollbar-thumb {
   background: #ccc;
   border-radius: 6px;
 }
 
+/* ===== Responsive ===== */
 @media (max-width: 900px) {
-  .main-container {
+  .main-container,
+  .page-container {
     flex-direction: column;
   }
 
@@ -260,84 +150,268 @@ h2, h3, h4 {
     overflow-x: auto;
   }
 }
-.timetable-container {
+
+.bottom-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  gap: 40px;
+  margin-top: 20px;
+}
+
+/* The timetable should expand */
+.timetable-area {
+  flex: 1;
+  min-height: 600px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 20px;
+}
+
+/* Chosen classes stays same width, aligns vertically with timetable */
+.chosen-classes-panel {
+  width: 260px;
+  height: 600px;       /* match timetable height */
+  overflow-y: auto;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+/* Top row with two search boxes */
+.top-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  gap: 40px;
+  padding: 20px;
+}
+
+/* Bottom row with timetable + chosen classes */
+.bottom-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  gap: 40px;
+  margin-top: 20px;
+}
+
+/* Search boxes */
+.search-box-panel {
+  width: 550px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 30px;
+  position: relative;
+}
+
+/* Timetable placeholder */
+.timetable-area {
+  flex: 1;
+  max-width: 1400px;
+}
+
+.timetable-placeholder {
+  width: 100%;
+  height: 600px;
+  border: 2px dashed #bbb;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #999;
+}
+
+/* Chosen classes aligned with timetable */
+.chosen-classes-panel {
+  width: 300px;
+  height: 720px;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.chosen-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chosen-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.delete-btn {
+  background: #ff5c5c;
+  padding: 4px 8px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.delete-btn:hover {
+  background: #e04848;
+}
+
+.empty-msg {
+  margin-top: 10px;
+  color: #666;
+  font-size: 14px;
+}
+
+
+/* Top-left empty cell */
+
+/* Hour label (left column) */
+
+/* Class block */
+
+
+/* One hour = 60px tall */
+.time-col-cell,
+.grid-cell {
+  height: 60px;
+}
+
+/* Timetable shows only 8am–6pm (10 rows) unless more hours exist */
+.timetable-grid {
+  max-height: calc(72px * 10);   /* visible window */
+  overflow-y: auto;              /* scroll only when needed */
+  overflow-x: hidden;
+}
+
+
+.fc-day-today {
+  background: none !important;
+}
+.fc-timegrid-slot {
+  height: 77px !important;
+  border-bottom: none !important;   /* remove 5-min grid lines */
+}
+
+/* Keep hour separators visible */
+.fc-timegrid-slot.fc-timegrid-slot-label {
+  border-bottom: 1px solid #ccc !important;
+}
+
+.fc-timegrid-slot-label {
+  display: flex;
+  align-items: flex-start !important;   /* move text to top of slot */
+  justify-content: flex-start !important; /* move text to left */
+  padding-top: 0px !important;          /* remove vertical centering */
+  padding-left: 1px !important;         /* small left padding */
+  height: auto !important;              /* allow label to sit at top */
+}
+
+/* Make the text slightly smaller & cleaner */
+.fc-timegrid-slot-label .fc-timegrid-slot-label-frame {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.fc-timegrid-axis {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  border-right: 1px solid #ddd !important;
+  background: white !important;
+}
+
+/* Optional: place hour at top-left */
+.fc-timegrid-slot-label {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  padding-top: 2px !important;
+  padding-left: 4px !important;
+}
+
+/* Ensure internal frame doesn't collapse */
+.fc-timegrid-slot-label-frame {
+  display: block !important;
+  width: 100% !important;
+}
+
+
+
+.chosen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.generate-btn {
+  background-color: #007aff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+  transform: translateY(-4px);
+}
+
+.generate-btn:hover {
+  background-color: #005fcc;
+}
+
+.chosen-classes-panel {
+  width: 300px;
+  height: 720px;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  width: 100%;
-  max-width: 1000px;
-  height: 700px;             /* fixed visible area */
-  overflow-y: auto;          /* ✅ vertical scroll enabled */
-  overflow-x: hidden;        /* fixed width */
-  margin: 0 auto;
-}
-
-.timetable-header {
-  display: grid;
-  grid-template-columns: 70px repeat(5, 1fr);
-  background: #f9fafb;
-  border-bottom: 1px solid #ddd;
-  position: sticky;
-  top: 0;
-  z-index: 3;
-}
-
-.day-header {
-  text-align: center;
-  font-weight: bold;
-  padding: 8px;
-  border-left: 1px solid #ddd;
-  background: #f9fafb;
-}
-
-.timetable-grid {
-  display: grid;
-  grid-template-columns: 70px repeat(5, 1fr);
-  width: 100%;
-  /* ✅ allow tall grid to overflow and trigger scroll */
-  min-height: 100%;
   position: relative;
 }
 
-.time-label {
-  border-top: 1px solid #eee;
-  text-align: right;
-  padding-right: 6px;
-  font-size: 12px;
-  color: #555;
-  background: white;
-  z-index: 1;
+/* Scrollable list */
+.chosen-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 70px; /* prevent content hiding behind footer */
 }
 
-.grid-cell {
-  border: 0.5px solid #f0f0f0;
+/* Fixed footer inside panel */
+.chosen-fixed-footer {
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  right: 20px;
+
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.timetable-block {
-  position: relative;
-  border: 2px solid;
+.chosen-fixed-footer button {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 14px;
+  background: #007aff;
+  border: 1px solid #ccc;
   border-radius: 6px;
-  background-color: rgba(37, 99, 235, 0.1);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  padding: 2px 4px;
-  box-sizing: border-box;
+  cursor: pointer;
 }
 
-.block-title,
-.block-label,
-.block-time,
-.block-loc {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.block-title {
-  font-weight: bold;
-  font-size: 13px;
+.chosen-fixed-footer button:hover {
+  background: #005fcc;
 }

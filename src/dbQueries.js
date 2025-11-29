@@ -81,48 +81,6 @@ export function createSectionEntry(db, sectionData) {
             timeStamp = excluded.timeStamp;`, sectionData);
 }
 
-//updata given entry in sectionData table
-export function updateSectionEntry(db, sectionData) {
-    return new Promise((resolve, reject) => {
-        const sql = `
-            UPDATE sectionData
-            SET
-                enroll = ?,
-                status = ?,
-                waitlist = ?,
-                info = ?,
-                day = ?,
-                time = ?,
-                location = ?,
-                units = ?,
-                instructor = ?,
-                timeStamp = ?
-            WHERE subjectID = ?
-              AND classID = ?
-              AND sectionID = ?;
-        `;
-
-        db.run(sql, sectionData, function(err) {
-            if (err) return reject(err);
-            resolve(this.changes); // 1 if updated, 0 if no row matched
-        });
-    });
-}
-
-
-//returns whether a section has already been stored in sectionData table
-export function sectionExists(db, subjectID, classID, sectionID) {
-    const stmt = db.prepare(
-        `SELECT 1 FROM sectionData
-         WHERE subjectID = ? AND classID = ? AND sectionID = ?
-         LIMIT 1`
-    );
-    stmt.bind([subjectID, classID, sectionID]);
-    const exists = stmt.step(); // Returns true if a row exists
-    stmt.free();
-    return exists;
-}
-
 // Refactored helper function for retrieving table data (getter functions)
 function getTable(stmt){
     const results = [];

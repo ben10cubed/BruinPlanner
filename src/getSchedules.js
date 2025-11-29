@@ -163,8 +163,13 @@ async function hasConflicts(db, sched) {
                 console.log(day + " " + daysArr[day]);
                 for(const otherTime of daysArr[day]) {
                     if(hasOverlap(time, otherTime)) {
+<<<<<<< HEAD
                         //console.log(time);
                         //console.log(otherTime);
+=======
+                        // console.log(time);
+                        // console.log(otherTime);
+>>>>>>> subjectID-api
                         return true;
                     }
                 }
@@ -263,16 +268,24 @@ export async function getSchedules(db, courses, term="26W") {
         let classID = course[1];
         let courseID = subjectID+'+'+classID;
         courseMap[courseID] = [];
+<<<<<<< HEAD
         const courseData = await getSections(db, subjectID, classID);
         const newCourseData = await filterAvailable(db, subjectID, classID, courseData);
 
+=======
+        const courseData = getSections(db, subjectID, classID);
+        const newCourseData = filterAvailable(db, subjectID, classID, courseData);
+>>>>>>> subjectID-api
         for(let course of newCourseData) {
             let sectionID = cutSectionID(course['sectionID']);
             if(isLecture(sectionID)) {
                 courseMap[courseID].push([sectionID, []]);
             }
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> subjectID-api
         for(let section of newCourseData) {
             let sectionID = cutSectionID(section['sectionID']);
             if(!isLecture(sectionID)) {
