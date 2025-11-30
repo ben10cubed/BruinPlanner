@@ -14,19 +14,66 @@ const strToDay = {
     "U": 6
 }
 
-async function filterAvailable(db, subjectID, classID, courseData) { //returns new courseData array with only available lectures and discussions
-    const newCourseData = []
-    for(var data of courseData) {
-        let sectionID = data['sectionID'];
-        let avail = await getSectionAvail(db, subjectID, classID, sectionID);
-        //console.log(avail);
-        if(avail == 'O') {
-            //console.log(data);
-            newCourseData.push(data);
+// async function filterAvailable(db, subjectID, classID, courseData) { //returns new courseData array with only available lectures and discussions
+//     const newCourseData = []
+//     for(var data of courseData) {
+//         let sectionID = data['sectionID'];
+//         let avail = await getSectionAvail(db, subjectID, classID, sectionID);
+//         //console.log(avail);
+//         if(avail == 'O') {
+//             //console.log(data);
+//             newCourseData.push(data);
+//         }
+//     }
+//     //console.log(newCourseData);
+//     return newCourseData;
+// }
+
+async function filterAvailable(db, possibilities) {
+    let newPossibilities = [];
+    for(let poss of possibilities) {
+        let valid = true;
+        let courseIDs = Object.keys(poss);
+        for(let courseID of courseIDs) {
+            let [subjectID, classID] = parseCourseID(courseID);
+            for(let sectionID of poss[courseID]) {
+                let avail = await getSectionAvail(db, subjectID, classID, sectionID);
+                if(avail != 'O') {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        if(valid) {
+            newPossibilities.push(poss);
         }
     }
-    //console.log(newCourseData);
-    return newCourseData;
+    return newPossibilities;
+}
+
+async function filterTimes(db, possibilities, startTime=800, endTime=1900) {
+    let newPossibilities = [];
+    for(let poss of possibilities) {
+        let valid = true;
+        let courseIDs = Object.keys(poss);
+        for(let courseID of courseIDs) {
+            let [subjectID, classID] = parseCourseID(courseID);
+            for(let sectionID of poss[courseID]) {
+                let timesStr = await getSectionTime(db, subjectID, classID, sectionID);
+                let times = getTimes(timesStr);
+                for(let i = 0; i < times.length; i++) {
+                    if(times[i][0] < startTime || times[i][1] > endTime) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+        }
+        if(valid) {
+            newPossibilities.push(poss);
+        }
+    }
+    return newPossibilities;
 }
 
 function parseCourseID(courseID) {
@@ -114,24 +161,31 @@ function getTimes(str) {
     return times;
 }
 
-function hasOverlap(time1, time2) {
-    const [start1, end1] = time1;
-    const [start2, end2] = time2;
+function toMinutes(time) {
+    return 60*Math.floor(time/100)+time%100;
+}
 
-    if(start2 <= end1 && start2 >= start1) {
-        return true;
-    }
-    if(start1 <= end2 && start1 >= start2) {
-        return true;
-    }
-    return false;
+function hasOverlap(time1, time2, buffer) {
+    let [start1, end1] = time1;
+    let [start2, end2] = time2;
+
+    start1 = toMinutes(start1);
+    end1 = toMinutes(end1);
+    start2 = toMinutes(start2);
+    end2 = toMinutes(end2);
+
+    if (end1 + buffer <= start2) return false;
+
+    if (end2 + buffer <= start1) return false;
+
+    return true;
 }
 
 function isValidDays(str) {
     return /^[MTWRFSU|]*$/.test(str);
 }
 
-async function hasConflicts(db, sched) {
+async function hasConflicts(db, sched, buffer=0) {
     const daysArr = new Array(7);
     for(let i = 0; i < 7; i++) {
         daysArr[i] = [];
@@ -140,18 +194,11 @@ async function hasConflicts(db, sched) {
     for (const [courseID, sectionList] of Object.entries(sched)) {
         let [subjectID, classID] = parseCourseID(courseID);
         for(let sectionID of sectionList) {
-            if(isLecture(sectionID)) {
-                sectionID = "Lec "+sectionID;
-            } else {
-                sectionID = "Dis "+sectionID;
-            }
             let daysStr = await getSectionDay(db, subjectID, classID, sectionID);
             if(!isValidDays(daysStr)) {
                 daysStr = "";
             }
             let days = getDays(daysStr);
-            console.log(days);
-            console.log(days.length);
 
             let timesStr = await getSectionTime(db, subjectID, classID, sectionID);
             //console.log(timesStr);
@@ -160,9 +207,8 @@ async function hasConflicts(db, sched) {
             for(let i = 0; i < days.length; i++) {
                 let day = strToDay[days[i]];
                 let time = times[i];
-                console.log(day + " " + daysArr[day]);
                 for(const otherTime of daysArr[day]) {
-                    if(hasOverlap(time, otherTime)) {
+                    if(hasOverlap(time, otherTime, buffer)) {
                         //console.log(time);
                         //console.log(otherTime);
                         return true;
@@ -176,14 +222,6 @@ async function hasConflicts(db, sched) {
     return false;
 }
 
-function cutSectionID(str) {
-    let index = 0;
-    while(str[index] != " ") {
-        index++;
-    }
-    return str.substring(index+1);
-}
-
 async function saveCourses(db, courses, term) {
     for(let course of courses) {
         let subjectID = course[0];
@@ -194,11 +232,10 @@ async function saveCourses(db, courses, term) {
 
         for(let lectureSection of lectureSections) {
             let lectureID = lectureSection[3];
-            let lectureNum = parseInt(cutSectionID(lectureID));
-            let lectureExists = await sectionExists(db, subjectID, classID, lectureSection[3]);
+            let lectureExists = await sectionExists(db, subjectID, classID, lectureID);
             if(!lectureExists) { //if lecture isn't already stored in the database, create new entries
                 await createSectionEntry(db, lectureSection);
-                const classHTML = await fetchCourse(subjectID, classID, term, lectureNum);
+                const classHTML = await fetchCourse(subjectID, classID, term, lectureID);
                 if (!classHTML || classHTML.includes("No results available based off your filter criteria")) continue;
                 const sections = getClassData(classHTML, subjectID, classID);
 
@@ -215,7 +252,7 @@ async function saveCourses(db, courses, term) {
                 }
             } else { //if lecture is already stored, just change the status/number of spots
                 await updateSectionEntry(db, lectureSection);
-                const classHTML = await fetchCourse(subjectID, classID, term, lectureNum);
+                const classHTML = await fetchCourse(subjectID, classID, term, lectureID);
                 if (!classHTML || classHTML.includes("No results available based off your filter criteria")) continue;
                 const sections = getClassData(classHTML, subjectID, classID);
 
@@ -240,7 +277,22 @@ async function saveCourses(db, courses, term) {
 }
 
 function isLecture(sectionID) {
-    return !(/[A-Z]/.test(sectionID[sectionID.length-1]));
+    return sectionID.includes("Lec");
+}
+
+function sameLecture(sectionA, sectionB) {
+    const extractLectureNum = (str) => {
+        // Matches the first integer in the string (e.g., "1" in "Dis 1A")
+        const match = str.match(/\b(\d+)/);
+        return match ? parseInt(match[1], 10) : null;
+    };
+
+    const lecA = extractLectureNum(sectionA);
+    const lecB = extractLectureNum(sectionB);
+
+    if (lecA === null || lecB === null) return false;
+
+    return lecA === lecB;
 }
 
 /**
@@ -248,10 +300,11 @@ function isLecture(sectionID) {
  * @param {string} term - UCLA term code (e.g., "26W").
  * @param {Promise<Array>} courses - array that stores requested course subject ID's and course numbers
  * @param {database} db
+ * @param {Map} reqs - Map that stores startTime, endTime, and buffer chosen by user
  * @returns {Promise<Array>} Array of plain value Maps, where each Map is a possible schedule. Key = subjectID + '+' + classID, and value = [lectureID, discussionID]
  */
 
-export async function getSchedules(db, courses, term="26W") {
+export async function getSchedules(db, courses, term, reqs={"startTime": 800, "endTime": 1900, "buffer": 0}) {
     const courseMap = {};
 
     const numCourses = courses.length;
@@ -264,20 +317,19 @@ export async function getSchedules(db, courses, term="26W") {
         let courseID = subjectID+'+'+classID;
         courseMap[courseID] = [];
         const courseData = await getSections(db, subjectID, classID);
-        const newCourseData = await filterAvailable(db, subjectID, classID, courseData);
 
-        for(let course of newCourseData) {
-            let sectionID = cutSectionID(course['sectionID']);
+        for(let course of courseData) {
+            let sectionID = course['sectionID'];
             if(isLecture(sectionID)) {
                 courseMap[courseID].push([sectionID, []]);
             }
         }
 
-        for(let section of newCourseData) {
-            let sectionID = cutSectionID(section['sectionID']);
+        for(let section of courseData) {
+            let sectionID = section['sectionID'];
             if(!isLecture(sectionID)) {
                 for(let i = 0; i < courseMap[courseID].length; i++) {
-                    if(courseMap[courseID][i][0] == sectionID[0]) {
+                    if(sameLecture(courseMap[courseID][i][0], sectionID)) {
                         courseMap[courseID][i][1].push(sectionID);
                         break;
                     }
@@ -293,11 +345,17 @@ export async function getSchedules(db, courses, term="26W") {
     //     console.log(courseMap[course]);
     // }
 
+    let buffer = reqs["buffer"];
+    let startTime = reqs["startTime"];
+    let endTime = reqs["endTime"];
+
     let possibilities = getAllPossibilities(courseMap);
+    possibilities = await filterAvailable(db, possibilities, buffer);
+    possibilities = await filterTimes(db, possibilities, startTime, endTime);
 
     const validSchedules = [];
     for(let poss of possibilities) {
-        if(!(await hasConflicts(db, poss))) {
+        if(!(await hasConflicts(db, poss, buffer))) {
             validSchedules.push(poss);
         }
     }

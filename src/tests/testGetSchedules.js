@@ -21,11 +21,17 @@ export async function testSchedules(term = "26W") {
     const courses = [
         ['MATH', '31A'],
         ['MATH', '32A'],
-        ['COM SCI', '143']
+        ['MATH', '115B']
     ];
 
+    const reqs = {
+        "startTime": 900,
+        "endTime": 1900,
+        "buffer": 11
+    }
+
     // Get schedules
-    const schedules = await getSchedules(db, courses, term);
+    const schedules = await getSchedules(db, courses, term, reqs);
 
     console.log("Possible schedules:\n");
     for (let schedule of schedules) {
