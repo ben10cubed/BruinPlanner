@@ -415,3 +415,21 @@ h2, h3, h4 {
 .chosen-fixed-footer button:hover {
   background: #005fcc;
 }
+
+.save-row {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.save-btn {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background: #2563eb;
+}

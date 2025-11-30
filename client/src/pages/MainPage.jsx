@@ -28,10 +28,15 @@ export default function MainPage({ onLogout }) {
   // Sections ready for timetable
   const [displayedSections, setDisplayedSections] = useState([]);
 
+  // -------------------------------------------
+  // TEMP: Save handler
+  // -------------------------------------------
+  function handleSave() {
+    console.log("Saving current schedule:", schedules[currentIndex]);
+    alert("Schedule saved! (placeholder)");
+  }
 
-  /* -------------------------------------------
-     Load all subjects once
-  ------------------------------------------- */
+  /* Load subjects once */
   useEffect(() => {
     async function loadSubjects() {
       try {
@@ -47,10 +52,7 @@ export default function MainPage({ onLogout }) {
     loadSubjects();
   }, []);
 
-
-  /* -------------------------------------------
-     Subject search filtering
-  ------------------------------------------- */
+  /* Subject filtering */
   useEffect(() => {
     if (isSelecting) return;
     const text = subjectQuery.trim().toUpperCase();
@@ -63,7 +65,6 @@ export default function MainPage({ onLogout }) {
       );
     }
   }, [subjectQuery, allSubjects, isSelecting]);
-
 
   async function handleSubjectSelect(subj) {
     setIsSelecting(true);
@@ -89,10 +90,7 @@ export default function MainPage({ onLogout }) {
     }
   }
 
-
-  /* -------------------------------------------
-     Class search filtering
-  ------------------------------------------- */
+  /* Class search filtering */
   useEffect(() => {
     const text = classQuery.trim().toUpperCase();
     if (!text) setClassResults(allClasses);
@@ -103,10 +101,7 @@ export default function MainPage({ onLogout }) {
     }
   }, [classQuery, allClasses]);
 
-
-  /* -------------------------------------------
-     Add/remove classes
-  ------------------------------------------- */
+  /* Add / Remove classes */
   function handleAddClass(cls) {
     if (!chosenClasses.some((c) =>
       c.classID === cls.classID &&
@@ -127,10 +122,7 @@ export default function MainPage({ onLogout }) {
     );
   }
 
-
-  /* -------------------------------------------
-     NEXT / PREVIOUS schedule
-  ------------------------------------------- */
+  /* Next/Prev/Clear */
   function handleNext() {
     if (schedules.length === 0) return;
     setCurrentIndex((prev) => (prev + 1) % schedules.length);
@@ -147,11 +139,9 @@ export default function MainPage({ onLogout }) {
     setCurrentIndex(0);
   }
 
-
-  /* -------------------------------------------
-     Fetch schedules from backend
-  ------------------------------------------- */
+  /* Generate schedules */
   async function handleGenerate() {
+    //Ensure correct mapping.
     const payload = {
       classes: chosenClasses.map((c) => ({
         subjectID: c.subjectID,
@@ -159,6 +149,7 @@ export default function MainPage({ onLogout }) {
       }))
     };
 
+    //Fetch section data from backend
     const res = await fetch("/api/schedules", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -168,14 +159,22 @@ export default function MainPage({ onLogout }) {
     const data = await res.json();
     console.log("Received schedules:", data);
 
+    //Alert user in case of errors or empty schedules
+    if (!res.ok) {
+      alert(`Error generating schedules: ${data.error}`);
+      return;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      alert("No possible schedules found.");
+      return;
+    }
+
     setSchedules(data);
     setCurrentIndex(0);
   }
 
-
-  /* ------------------------------------------------------------------
-     EXPAND ENTRIES: Main -> "MWF" | "1000-1050|1000-1100|..." -> entries[]
-  ------------------------------------------------------------------ */
+  /* Expand timetable entries */
   function expandSectionEntries({ data }) {
     if (!data.day || data.day.startsWith("Not") ||
         !data.time || data.time.startsWith("Not")) return [];
@@ -210,10 +209,7 @@ export default function MainPage({ onLogout }) {
     return result;
   }
 
-
-  /* ------------------------------------------------------------------
-     Convert 1 DB row → multiple timetable events
-  ------------------------------------------------------------------ */
+  /* Convert DB row → timetable rows */
   function convertDBRowToTimetableSections(row) {
     const expanded = expandSectionEntries({ data: row });
     if (!expanded || expanded.length === 0) return [];
@@ -239,10 +235,7 @@ export default function MainPage({ onLogout }) {
     }));
   }
 
-
-  /* -------------------------------------------
-     Convert which schedule is selected → sections[]
-  ------------------------------------------- */
+  /* Convert selected schedule → displayed sections */
   useEffect(() => {
     async function loadSections() {
       if (schedules.length === 0) {
@@ -267,12 +260,8 @@ export default function MainPage({ onLogout }) {
           }
 
           const dbRow = await res.json();
-          console.log(dbRow);
-
-
           const converted = convertDBRowToTimetableSections(dbRow);
           result.push(...converted);
-
         }
       }
 
@@ -282,10 +271,9 @@ export default function MainPage({ onLogout }) {
     loadSections();
   }, [schedules, currentIndex]);
 
-
-  /* -------------------------------------------
-     Render
-  ------------------------------------------- */
+  /* ------------------------------------------- */
+  /* Render                                      */
+  /* ------------------------------------------- */
   return (
     <div className="page-container">
       <div className="top-row">
@@ -319,14 +307,23 @@ export default function MainPage({ onLogout }) {
           <Timetable sections={displayedSections} />
         </div>
 
-        <ChosenClasses
-          chosenClasses={chosenClasses}
-          handleDelete={handleDelete}
-          handleGenerate={handleGenerate}
-          handleNext={handleNext}
-          handlePrev={handlePrev}
-          handleClear={handleClear}
-        />
+        <div>
+          <ChosenClasses
+            chosenClasses={chosenClasses}
+            handleDelete={handleDelete}
+            handleGenerate={handleGenerate}
+            handleNext={handleNext}
+            handlePrev={handlePrev}
+            handleClear={handleClear}
+          />
+
+          {/* Need to figure out where to place this in for clarity*/}
+          <div className="save-row">
+            <button className="save-btn" onClick={handleSave}>
+              Save Schedule
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

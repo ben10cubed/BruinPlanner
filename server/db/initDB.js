@@ -32,9 +32,8 @@ export async function initDB() {
     console.log("[DB] Created new in-memory database (will save on first write).");
   }
 
-
   // -------------------------------------------------------------
-  // Create missing tables (safe with IF NOT EXISTS)
+  // Create tables (safe with IF NOT EXISTS)
   // -------------------------------------------------------------
 
   db.run(`
@@ -71,6 +70,22 @@ export async function initDB() {
     );
   `);
 
+  // -------------------------------------------------------------
+  // Allows MULTIPLE schedules per user
+  // -------------------------------------------------------------
+  db.run(`
+    CREATE TABLE IF NOT EXISTS userSchedules (
+      userID TEXT,
+      canonicalHash TEXT,
+      ciphertext TEXT,
+      iv TEXT,
+      tag TEXT,
+      name TEXT,
+      PRIMARY KEY (userID, canonicalHash),
+      UNIQUE(userID, name)
+    );
+  `);
+
 
   // -------------------------------------------------------------
   // Auto-save helper attached to DB instance
@@ -80,7 +95,6 @@ export async function initDB() {
     fs.writeFileSync(DB_FILE, Buffer.from(data));
     console.log("[DB] Saved to:", DB_FILE);
   };
-
 
   return db;
 }
