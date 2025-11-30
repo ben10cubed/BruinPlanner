@@ -1,11 +1,7 @@
 import he from "he";
 
-/**
- * Fetches UCLA course titles for a given subject and term.
- * Cleans double-encoded HTML entities and handles duplicate classIDs intelligently.
- */
-export async function getClassID(term, subjectId) {
-  const urlFirstPageCheck = `https://sa.ucla.edu/ro/public/soc/Results?t=${term}&sBy=subject&subj=${encodeURIComponent(subjectId)}&catlg=&cls_no=&undefined=Go&btnIsInIndex=btn_inIndex`;
+export async function getClassID(term="26W", subjectID) {
+  const urlFirstPageCheck = `https://sa.ucla.edu/ro/public/soc/Results?t=${term}&sBy=subject&subj=${encodeURIComponent(subjectID)}&catlg=&cls_no=&undefined=Go&btnIsInIndex=btn_inIndex`;
   const results = [];
   const headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -19,6 +15,8 @@ export async function getClassID(term, subjectId) {
   const splitParts = (name) => name.split(":").map(s => s.trim());
   const hasKeywordAnywhere = (name) => /lecture|seminar/i.test(name);
 
+  //Special processing for FIAT LX 19 due to duplicates that store completely different classes
+  let fiat19Count = 0;
   async function processText(text) {
     const regex = /aria-disabled="false">(.*?)</g;
     for (const match of text.matchAll(regex)) {
@@ -35,7 +33,17 @@ export async function getClassID(term, subjectId) {
         // New course ID
         if (lastClassEntry) results.push(lastClassEntry);
         lastClassID = trimmedID;
-        lastClassEntry = { classID: trimmedID, className };
+        let finalClassID = trimmedID;
+
+        // Special handling for FIAT LX 19 duplicates
+        if (subjectID === "FIAT LX" && trimmedID === "19") {
+          fiat19Count++;
+          finalClassID = `19${String.fromCharCode(64 + fiat19Count)}`;  
+          lastClassID = finalClassID;
+          // 1 → A, 2 → B, 3 → C, etc.
+        }
+
+        lastClassEntry = { classID: finalClassID, className };
       } else {
         // Duplicate course ID → apply smart selection
         const prev = lastClassEntry.className;
@@ -77,7 +85,7 @@ export async function getClassID(term, subjectId) {
   // Paginated results
   const urlFurtherPageCheck = "https://sa.ucla.edu/ro/public/soc/Results/CourseTitlesView?search_by=subject&";
   const model = {
-    subj_area_cd: subjectId,
+    subj_area_cd: subjectID,
     search_by: "Subject",
     term_cd: term,
     ActiveEnrollmentFlag: "n",
@@ -112,8 +120,3 @@ export async function getClassID(term, subjectId) {
 
   return results.filter(e => e.classID && e.className);
 }
-
-//Example usage
-// console.log(await getClassID("26W", "COM SCI"));
-// console.log(await getClassID("26W", "BIOENGR"));
-// console.log(await getClassID("26W", "ARTS ED"));

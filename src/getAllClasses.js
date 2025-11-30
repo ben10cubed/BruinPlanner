@@ -3,7 +3,7 @@
 import { getSubjectID } from './getSubjectID.js';
 import { getClassID } from './getClassID.js';
 import { fetchCourse } from './getLectures.js';
-import { getClassData } from './getClassData.js';
+import { getClassData } from './scrapingUtils.js';
 
 /**
  * Fetches all class data for all subjects in a given term.

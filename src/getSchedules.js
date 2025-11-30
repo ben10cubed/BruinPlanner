@@ -1,7 +1,7 @@
 //Assumes db already exists
 
 import { fetchCourse } from "./getLectures.js";
-import { getClassData } from "./getClassData.js";
+import { getClassData } from "./scrapingUtils.js";
 import { getSectionDay, getSectionTime, getSections, getSectionAvail, getClassEntries, createSectionEntry, updateSectionEntry, sectionExists } from "./dbQueries.js";
 
 const strToDay = {
@@ -209,8 +209,6 @@ async function hasConflicts(db, sched, buffer=0) {
                 let time = times[i];
                 for(const otherTime of daysArr[day]) {
                     if(hasOverlap(time, otherTime, buffer)) {
-                        //console.log(time);
-                        //console.log(otherTime);
                         return true;
                     }
                 }
@@ -316,15 +314,14 @@ export async function getSchedules(db, courses, term, reqs={"startTime": 800, "e
         let classID = course[1];
         let courseID = subjectID+'+'+classID;
         courseMap[courseID] = [];
-        const courseData = await getSections(db, subjectID, classID);
 
+        const courseData = await getSections(db, subjectID, classID);
         for(let course of courseData) {
             let sectionID = course['sectionID'];
             if(isLecture(sectionID)) {
                 courseMap[courseID].push([sectionID, []]);
             }
         }
-
         for(let section of courseData) {
             let sectionID = section['sectionID'];
             if(!isLecture(sectionID)) {

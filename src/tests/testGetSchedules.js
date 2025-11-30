@@ -27,7 +27,7 @@ export async function testSchedules(term = "26W") {
     const reqs = {
         "startTime": 900,
         "endTime": 1900,
-        "buffer": 11
+        "buffer": 10
     }
 
     // Get schedules
