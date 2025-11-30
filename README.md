@@ -1,31 +1,21 @@
-# BruinPlanner, subjectID-api
+# BruinPlanner
 
-1. Moved ALL get files from src to client/src (importing issue in App.jsx).
-2. created a new file server.js that handles the getSubjectID function
-   - Server-side logic to scrape the official UCLA SOC API using fetchSubjectID
-3. the actual getSubject is modified so it fetches the api instead of handling the actual fetching
-4. removed the "default" timetable, now only generates when the class is selected
+The purpose of this web-app is to provide UCLA students a more modern interface to:
+   - Choose classes
+   - Generate schedules based on available classes
+   - Save the generated schedules for future use
 
-TODO:
-Sort out the different package.json files.
-Get frontend to call backend APIs.
+To prepare the web-app after cloning the repository:
+   1. Use cd to navigate to within BruinPlanner.
 
-To run:
-
-start server
-
-cd ~/BruinPlanner/server
-node server.js
-
-on one terminal window,
-
-and 
-
-run frontend
-
-cd ~/BruinPlanner/client
-npm run dev
-
-on another.
+   2. Run npm install under both the /server and the /client directory
+      This should install all the necessary libraries and dependencies.
+   
+   3. Using a terminal in VSCode, run node server.js under /server
+      This initializes the backend that processes API requests.
+   
+   4. With a new terminal in VSCode, run npm run dev under /client
+      This initializes the frontend where the user interface. The user should be able to register an account.
+      Due to limited time, user information is stored locally, so the same account will not work on a different device.
 
 
