@@ -76,10 +76,6 @@ h2, h3, h4 {
   background: #eef2ff;
 }
 
-
-
-
-
 /* ===== Course Items ===== */
 .course-item {
   border-bottom: 1px solid #f3f3f3;
@@ -96,23 +92,6 @@ h2, h3, h4 {
   align-items: center;
   margin-top: 2px;
 }
-
-.add-btn {
-  padding: 3px 8px;
-  font-size: 11px;
-  border-radius: 6px;
-  background: #2563eb;
-  border: none;
-  color: white;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.add-btn:hover {
-  background: #1d4ed8;
-}
-
-
-
 
 .clear-btn,
 .remove-btn {
@@ -160,20 +139,12 @@ h2, h3, h4 {
   margin-top: 20px;
 }
 
-/* The timetable should expand */
-.timetable-area {
-  flex: 1;
-  min-height: 600px;
-  background: white;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  padding: 20px;
-}
+
 
 /* Chosen classes stays same width, aligns vertically with timetable */
 .chosen-classes-panel {
   width: 260px;
-  height: 600px;       /* match timetable height */
+  height: 700px;       /* match timetable height */
   overflow-y: auto;
   background: #f7f7f7;
   border: 1px solid #ddd;
@@ -211,28 +182,9 @@ h2, h3, h4 {
   position: relative;
 }
 
-/* Timetable placeholder */
-.timetable-area {
-  flex: 1;
-  max-width: 1400px;
-}
-
-.timetable-placeholder {
-  width: 100%;
-  height: 600px;
-  border: 2px dashed #bbb;
-  border-radius: 10px;
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #999;
-}
-
 /* Chosen classes aligned with timetable */
 .chosen-classes-panel {
-  width: 300px;
+  width: 350px;
   height: 720px;
   background: #f7f7f7;
   border: 1px solid #ddd;
@@ -254,18 +206,6 @@ h2, h3, h4 {
   border-bottom: 1px solid #ddd;
 }
 
-.delete-btn {
-  background: #ff5c5c;
-  padding: 4px 8px;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.delete-btn:hover {
-  background: #e04848;
-}
-
 .empty-msg {
   margin-top: 10px;
   color: #666;
@@ -273,25 +213,6 @@ h2, h3, h4 {
 }
 
 
-/* Top-left empty cell */
-
-/* Hour label (left column) */
-
-/* Class block */
-
-
-/* One hour = 60px tall */
-.time-col-cell,
-.grid-cell {
-  height: 60px;
-}
-
-/* Timetable shows only 8am–6pm (10 rows) unless more hours exist */
-.timetable-grid {
-  max-height: calc(72px * 10);   /* visible window */
-  overflow-y: auto;              /* scroll only when needed */
-  overflow-x: hidden;
-}
 
 
 .fc-day-today {
@@ -365,6 +286,7 @@ h2, h3, h4 {
   font-weight: 500;
   transition: background 0.2s;
   transform: translateY(-4px);
+  margin-left: auto;
 }
 
 .generate-btn:hover {
@@ -372,8 +294,8 @@ h2, h3, h4 {
 }
 
 .chosen-classes-panel {
-  width: 300px;
-  height: 720px;
+  width: 350px;
+  height: 800px;
   background: #f7f7f7;
   border: 1px solid #ddd;
   border-radius: 10px;
@@ -432,4 +354,205 @@ h2, h3, h4 {
 
 .save-btn:hover {
   background: #2563eb;
+}
+
+/* ===============================
+   Sidebar for Saved Schedules
+   =============================== */
+.saved-schedules-sidebar {
+  width: 220px;
+  background: #f4f7ff;
+  border-left: 2px solid #003b8e;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.saved-schedules-sidebar h3 {
+  margin: 0 0 8px 0;
+  color: #003b8e;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.empty-msg {
+  color: #555;
+  font-size: 14px;
+  font-style: italic;
+}
+
+
+/* ===============================
+   Saved Schedule Row
+   =============================== */
+.saved-schedule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border: 1px solid #d0d7e6;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.saved-schedule-item:hover {
+  background: #e9f0ff;
+}
+
+/* Highlight when selected */
+.saved-schedule-item.active {
+  border: 2px solid #003b8e;
+  background: #e5edff;
+}
+
+
+/* Left side schedule text */
+.schedule-name {
+  font-size: 14px;
+  color: #003b8e;
+  font-weight: 500;
+}
+
+.schedule-name:hover {
+  text-decoration: underline;
+}
+
+
+/* Delete button */
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: #b00020;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+}
+
+.delete-btn:hover {
+  text-decoration: underline;
+}
+
+
+/* ===============================
+   Modal Overlay
+   =============================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+}
+
+
+/* Modal Box */
+.modal-box {
+  background: white;
+  width: 330px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.modal-box h2 {
+  margin-top: 0;
+  color: #003b8e;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+
+/* Modal Inputs */
+.modal-input {
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #d0d7e6;
+  font-size: 14px;
+}
+
+
+/* Modal Button Row */
+.modal-buttons {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-buttons button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.modal-buttons button:first-child {
+  background: #003b8e;
+  color: white;
+}
+
+.modal-buttons button:last-child {
+  background: #ccc;
+}
+
+
+/* ===============================
+   Layout Fixes
+   =============================== */
+
+/* Bottom row: Timetable | ChosenClasses | SavedSidebar */
+.bottom-row {
+  display: flex;
+  flex-direction: wrap;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+/* Ensure timetable shrinks/grows correctly */
+.timetable-area {
+  flex-grow: 1 1 100%;
+  min-width: 1000px;
+  min-height: 600px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 20px;
+}
+
+
+/* Save row under chosen classes */
+.save-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.save-btn {
+  background-color: #007aff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+  transform: translateY(-4px);
+  margin-left: auto;
+}
+
+.save-btn:hover {
+  background-color: #005fcc;
 }

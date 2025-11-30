@@ -6,7 +6,8 @@ export default function ChosenClasses({
   handleGenerate,
   handleNext,
   handlePrev,
-  handleClear
+  handleClear,
+  handleSave
 }) {
   return (
     <div className="chosen-classes-panel">
@@ -16,6 +17,9 @@ export default function ChosenClasses({
         <h3>Chosen Classes</h3>
         <button className="generate-btn" onClick={handleGenerate}>
           Generate
+        </button>
+        <button className="save-btn" onClick={handleSave}>
+          Save
         </button>
       </div>
 
