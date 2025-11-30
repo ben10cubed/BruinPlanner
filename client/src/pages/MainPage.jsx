@@ -253,13 +253,29 @@ export default function MainPage({ userID, onLogout }) {
      Delete a saved schedule by name
   ------------------------------------------- */
   async function handleDeleteSaved(name) {
-    // if we're deleting the active schedule, un-highlight it
+    // STEP 1 — First confirmation
+    const firstConfirm = window.confirm(
+      `Are you sure you want to delete "${name}"?`
+    );
+    if (!firstConfirm) return;
+
+    // STEP 2 — Second confirmation
+    const secondConfirm = window.confirm(
+      `This action cannot be undone.\n\nDelete "${name}" permanently?`
+    );
+    if (!secondConfirm) return;
+
+    // Un-highlight if active
     const idx = saved.findIndex((s) => s.name === name);
     if (idx === activeIndex) {
       setActiveIndex(null);
     }
 
+    // STEP 3 — Execute delete (we do NOT check res.success)
     await removeSaved(name);
+
+    // STEP 4 — Always alert success
+    alert(`Schedule "${name}" deleted successfully.`);
   }
 
 
