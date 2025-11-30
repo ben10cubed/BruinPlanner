@@ -1,39 +1,86 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import initSqlJs from "sql.js";
 
+// -------------------------------------------------------------
+// Resolve correct absolute path for database file
+// -------------------------------------------------------------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// DB stored here: server/sql/database.sqlite
+const DB_FILE = path.resolve(__dirname, "../sql/database.sqlite");
+
+
+// -------------------------------------------------------------
+// Initialize DB (load existing or create new)
+// -------------------------------------------------------------
 export async function initDB() {
   const SQL = await initSqlJs();
-  const db = new SQL.Database();
+
+  let db;
+
+  if (fs.existsSync(DB_FILE)) {
+    // Load existing DB
+    const fileBuffer = fs.readFileSync(DB_FILE);
+    db = new SQL.Database(fileBuffer);
+    console.log("[DB] Loaded existing database:", DB_FILE);
+  } else {
+    // Create new empty DB
+    db = new SQL.Database();
+    console.log("[DB] Created new in-memory database (will save on first write).");
+  }
 
 
-    db.run(`CREATE TABLE IF NOT EXISTS subjectData (
-        subjectID TEXT PRIMARY KEY,
-        subjectName TEXT
-        );`);
+  // -------------------------------------------------------------
+  // Create missing tables (safe with IF NOT EXISTS)
+  // -------------------------------------------------------------
 
-          //Table for subjectID and classID mapping
-    db.run(`CREATE TABLE IF NOT EXISTS classData (
-        subjectID TEXT,
-        classID TEXT,
-        className TEXT,
-        PRIMARY KEY (subjectID, classID)
-        );`);
-  
-  
-          //We will likely have to change this eventually.
-    db.run(`CREATE TABLE IF NOT EXISTS sectionData (
-        subjectID TEXT,
-        classID TEXT,
-        enroll TEXT,
-        sectionID TEXT,
-        status TEXT,
-        waitlist TEXT,
-        info TEXT,
-        day TEXT,
-        time TEXT,
-        location TEXT,
-        units TEXT,
-        instructor TEXT,
-        PRIMARY KEY (subjectID, classID, sectionID)
-        );`);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS subjectData (
+      subjectID TEXT PRIMARY KEY,
+      subjectName TEXT
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS classData (
+      subjectID TEXT,
+      classID TEXT,
+      className TEXT,
+      PRIMARY KEY (subjectID, classID)
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sectionData (
+      subjectID TEXT,
+      classID TEXT,
+      enroll TEXT,
+      sectionID TEXT,
+      status TEXT,
+      waitlist TEXT,
+      info TEXT,
+      day TEXT,
+      time TEXT,
+      location TEXT,
+      units TEXT,
+      instructor TEXT,
+      PRIMARY KEY (subjectID, classID, sectionID)
+    );
+  `);
+
+
+  // -------------------------------------------------------------
+  // Auto-save helper attached to DB instance
+  // -------------------------------------------------------------
+  db.saveToDisk = function () {
+    const data = db.export();
+    fs.writeFileSync(DB_FILE, Buffer.from(data));
+    console.log("[DB] Saved to:", DB_FILE);
+  };
+
+
   return db;
 }
