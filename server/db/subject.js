@@ -1,36 +1,65 @@
 import { getTable } from "../utils/getTable.js";
+import { runAndSave } from "../utils/dbUtils.js";
 
-// Insert a subject
-export function createSubjectEntry(db, subjectData) {
-  db.run(`INSERT INTO subjectData (subjectID, subjectName) VALUES (?, ?)
-        ON CONFLICT(subjectID)
-        DO UPDATE SET
-        subjectName = excluded.subjectName;`, subjectData);
+/* ===========================================================
+   CREATE OR UPDATE SUBJECT ENTRY
+   subjectData must be: [subjectID, subjectName]
+   =========================================================== */
+export async function createSubjectEntry(db, subjectData) {
+  const sql = `
+    INSERT INTO subjectData (subjectID, subjectName)
+    VALUES (?, ?)
+    ON CONFLICT(subjectID)
+    DO UPDATE SET subjectName = excluded.subjectName;
+  `;
+
+  await runAndSave(db, sql, subjectData);
 }
 
-// Get all subjects
+
+/* ===========================================================
+   GET ALL SUBJECTS
+   Returns: [{ subjectID, subjectName }]
+   =========================================================== */
 export function getSubjects(db) {
-  const stmt = db.prepare("SELECT * FROM subjectData;");
+  const stmt = db.prepare(`
+    SELECT subjectID, subjectName
+    FROM subjectData
+    ORDER BY subjectID;
+  `);
   return getTable(stmt);
 }
 
-//Test if a subject exists. Ideally, we should never reach this stage
-//We shouldn't be able to search if the ID never existed, but just in case.
+
+/* ===========================================================
+   CHECK IF SUBJECT EXISTS
+   Returns: true / false
+   =========================================================== */
 export function subjectExists(db, subjectID) {
   const stmt = db.prepare(`
-    SELECT 1 FROM subjectData
-    WHERE subjectID = '${subjectID}'
+    SELECT 1
+    FROM subjectData
+    WHERE subjectID = ?
     LIMIT 1;
   `);
 
+  stmt.bind([subjectID]);
   return getTable(stmt).length > 0;
 }
 
-// Search subjects by prefix (optional)
+
+/* ===========================================================
+   SEARCH SUBJECTS BY PREFIX
+   Returns all subjects whose ID starts with searchTerm
+   =========================================================== */
 export function searchSubjectArea(db, searchTerm) {
   const stmt = db.prepare(`
-    SELECT * FROM subjectData
-    WHERE subjectID LIKE '${searchTerm}%';
+    SELECT subjectID, subjectName
+    FROM subjectData
+    WHERE subjectID LIKE ?
+    ORDER BY subjectID;
   `);
+
+  stmt.bind([`${searchTerm}%`]);
   return getTable(stmt);
 }

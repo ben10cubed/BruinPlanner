@@ -8,6 +8,7 @@ import sectionRoute from "./routes/sections.js";
 import schedulesRoute from "./routes/schedules.js";
 import registrationRoute from "./routes/registration.js";
 import loginRoute from "./routes/login.js";
+import usersRoute from "./routes/users.js";
 
 //Initialize express app and middleware
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/sections", sectionRoute(db));
 app.use("/api/schedules", schedulesRoute(db));
 app.use("/api/registration", registrationRoute(db));
 app.use("/api/login", loginRoute(db));
+app.use("/api/users", usersRoute(db));
 
 //Start server!
 app.listen(3000, () => console.log("Server running on 3000"));

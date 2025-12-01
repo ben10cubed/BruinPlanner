@@ -263,10 +263,15 @@ async function fetchDiscussions(subject_code, course_ID, term, lecture_num) {
     lecture_num: optional parameter; if it is entered, then it returns the discussion sections corresponding to that lecture. If not, then it just returns the lectures
 */
 
-export async function fetchCourse(subject_code, course_ID, term, lecture_num=null) {
-    if(lecture_num === null) {
+export async function fetchCourse(subject_code, course_ID, term, lectureID=null) {
+    if(lectureID === null) {
         return fetchLectures(subject_code, course_ID, term);
     }
+    let index = 0;
+    while(lectureID[index] != " ") {
+        index++;
+    }
+    let lecture_num = parseInt(lectureID.substring(index+1));
     return fetchDiscussions(subject_code, course_ID, term, lecture_num);
 }
 

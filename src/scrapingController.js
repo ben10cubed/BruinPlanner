@@ -1,6 +1,6 @@
 import { getSubjectID } from "./getSubjectID.js";
 import { getClassID } from "./getClassID.js";
-import { getClassData } from "./getClassData.js";
+import { getClassData } from "./scrapingUtils.js";
 import { initDB, createSectionEntry, createSubjectEntry, getAllEntries, getClassEntries, searchSubjectArea, searchClass, getSectionDay, getSectionTime, getClasses, getSections, createClassEntry, testa, getSectionStatus, getSectionAvail } from "./dbQueries.js";
 import { fetchCourse } from "./getLectures.js";
 
