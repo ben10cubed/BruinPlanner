@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from "react";
+
 import Timetable from "../components/Timetable.jsx";
 import SubjectSearch from "../components/SubjectSearch.jsx";
 import ClassSearch from "../components/ClassSearch.jsx";
 import ChosenClasses from "../components/ChosenClasses.jsx";
+import SavedSchedulesSidebar from "../components/SavedSchedulesSidebar.jsx";
+import SaveModal from "../components/SaveModal.jsx";
 
-export default function MainPage({ onLogout }) {
+import useScheduleGenerator from "../hooks/useScheduleGenerator.js";
+import useSavedSchedules from "../hooks/useSavedSchedules.js";
+import useTimetableLoader from "../hooks/useTimetableLoader.js";
+
+export default function MainPage({ userID, onLogout }) {
+  /* -------------------------------------------
+     Search and class selection state
+  ------------------------------------------- */
   const [allSubjects, setAllSubjects] = useState([]);
   const [allClasses, setAllClasses] = useState([]);
   const [subjectResults, setSubjectResults] = useState([]);
@@ -18,25 +28,56 @@ export default function MainPage({ onLogout }) {
 
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
-
   const [chosenClasses, setChosenClasses] = useState([]);
 
-  // Schedules from backend
-  const [schedules, setSchedules] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  /* -------------------------------------------
+     Schedules (generated via backend)
+  ------------------------------------------- */
+  const {
+    schedules,
+    currentIndex,
+    setCurrentIndex,
+    generate,
+    loadFromSaved,
+  } = useScheduleGenerator();
 
-  // Sections ready for timetable
-  const [displayedSections, setDisplayedSections] = useState([]);
+  /* -------------------------------------------
+     Saved schedules (user's named schedules)
+  ------------------------------------------- */
+  const {
+    saved,
+    activeIndex,
+    setActiveIndex,
+    reload: reloadSaved,
+    save: saveSchedule,
+    remove: removeSaved,
+  } = useSavedSchedules(userID);
 
-  // -------------------------------------------
-  // TEMP: Save handler
-  // -------------------------------------------
-  function handleSave() {
-    console.log("Saving current schedule:", schedules[currentIndex]);
-    alert("Schedule saved! (placeholder)");
-  }
+  /* -------------------------------------------
+     Timetable sections derived from schedules[currentIndex]
+  ------------------------------------------- */
+  const displayedSections = useTimetableLoader(schedules, currentIndex);
 
-  /* Load subjects once */
+  /* -------------------------------------------
+     Save modal state
+  ------------------------------------------- */
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveMode, setSaveMode] = useState("new"); // "new" | "existing" -> either save timetable as new or overwrite existing
+  const [saveName, setSaveName] = useState("");
+  const [saveExistingName, setSaveExistingName] = useState("");
+
+
+  /* -------------------------------------------
+     Load saved schedules once per userID
+  ------------------------------------------- */
+  useEffect(() => {
+    reloadSaved();
+  }, [userID]);
+
+
+  /* -------------------------------------------
+     Load subjects once
+  ------------------------------------------- */
   useEffect(() => {
     async function loadSubjects() {
       try {
@@ -52,12 +93,17 @@ export default function MainPage({ onLogout }) {
     loadSubjects();
   }, []);
 
-  /* Subject filtering */
+
+  /* -------------------------------------------
+     Subject search filtering
+  ------------------------------------------- */
   useEffect(() => {
     if (isSelecting) return;
+
     const text = subjectQuery.trim().toUpperCase();
-    if (!text) setSubjectResults(allSubjects);
-    else {
+    if (!text) {
+      setSubjectResults(allSubjects);
+    } else {
       setSubjectResults(
         allSubjects.filter((s) =>
           s.subjectName.toUpperCase().includes(text)
@@ -66,6 +112,10 @@ export default function MainPage({ onLogout }) {
     }
   }, [subjectQuery, allSubjects, isSelecting]);
 
+
+  /* -------------------------------------------
+     Subject selection → load classes for subject
+  ------------------------------------------- */
   async function handleSubjectSelect(subj) {
     setIsSelecting(true);
     setSelectedSubject(subj);
@@ -80,49 +130,90 @@ export default function MainPage({ onLogout }) {
       setAllClasses(
         data.map((c) => ({
           ...c,
-          full: `${c.classID} - ${c.className}`
+          full: `${c.classID} - ${c.className}`,
         }))
       );
       setClassQuery("");
       setClassResults([]);
     } catch (err) {
       console.error("Class fetch failed:", err);
+    } finally {
+      setIsSelecting(false);
     }
   }
 
-  /* Class search filtering */
+
+  /* -------------------------------------------
+     Class search filtering
+  ------------------------------------------- */
   useEffect(() => {
     const text = classQuery.trim().toUpperCase();
-    if (!text) setClassResults(allClasses);
-    else {
+    if (!text) {
+      setClassResults(allClasses);
+    } else {
       setClassResults(
-        allClasses.filter((c) => c.full.toUpperCase().includes(text)).slice(0, 8)
+        allClasses
+          .filter((c) => c.full.toUpperCase().includes(text))
+          .slice(0, 8)
       );
     }
   }, [classQuery, allClasses]);
 
-  /* Add / Remove classes */
+
+  /* -------------------------------------------
+     Add / Remove classes from chosenClasses
+  ------------------------------------------- */
   function handleAddClass(cls) {
-    if (!chosenClasses.some((c) =>
-      c.classID === cls.classID &&
-      c.subjectID === selectedSubject.subjectID
-    )) {
-      setChosenClasses([
-        ...chosenClasses,
-        { ...cls, subjectID: selectedSubject.subjectID }
-      ]);
+    if (
+      !selectedSubject ||
+      chosenClasses.some(
+        (c) =>
+          c.classID === cls.classID &&
+          c.subjectID === selectedSubject.subjectID
+      )
+    ) {
+      return;
     }
+
+    setChosenClasses((prev) => [
+      ...prev,
+      { ...cls, subjectID: selectedSubject.subjectID },
+    ]);
   }
 
   function handleDelete(classID, subjectID) {
-    setChosenClasses(
-      chosenClasses.filter(
+    setChosenClasses((prev) =>
+      prev.filter(
         (c) => !(c.classID === classID && c.subjectID === subjectID)
       )
     );
   }
 
-  /* Next/Prev/Clear */
+
+  /* -------------------------------------------
+     Generate schedules (backend)
+  ------------------------------------------- */
+  async function handleGenerate() {
+    if (chosenClasses.length === 0) {
+      alert("Please add at least one class before generating.");
+      return;
+    }
+
+    const result = await generate(chosenClasses);
+
+    if (result.error) {
+      alert("Error generating schedules: " + result.error);
+      return;
+    }
+
+    // New generated schedules → not associated with a saved schedule
+    setActiveIndex(null);
+  }
+
+
+  /* -------------------------------------------
+     Next / Prev over generated schedules
+  ------------------------------------------- */
   function handleNext() {
     if (schedules.length === 0) return;
     setCurrentIndex((prev) => (prev + 1) % schedules.length);
@@ -133,149 +224,133 @@ export default function MainPage({ onLogout }) {
     setCurrentIndex((prev) => (prev - 1 + schedules.length) % schedules.length);
   }
 
+
+  /* -------------------------------------------
+     Clear chosen classes and timetable
+  ------------------------------------------- */
   function handleClear() {
-    setSchedules([]);
-    setDisplayedSections([]);
-    setCurrentIndex(0);
+    setChosenClasses([]);
+    setActiveIndex(null);
+    // Clear timetable by loading an empty "schedule"
+    loadFromSaved({});
   }
 
-  /* Generate schedules */
-  async function handleGenerate() {
-    //Ensure correct mapping.
-    const payload = {
-      classes: chosenClasses.map((c) => ({
-        subjectID: c.subjectID,
-        classID: c.classID
-      }))
-    };
 
-    //Fetch section data from backend
-    const res = await fetch("/api/schedules", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+  /* -------------------------------------------
+     Load saved schedule into timetable when clicked
+  ------------------------------------------- */
+  function handleLoadSaved(index) {
+    const item = saved[index];
+    if (!item) return;
 
-    const data = await res.json();
-    console.log("Received schedules:", data);
+    // Overwrite current generated schedules with this saved one
+    loadFromSaved(item.schedule);
+    setActiveIndex(index);
+  }
 
-    //Alert user in case of errors or empty schedules
-    if (!res.ok) {
-      alert(`Error generating schedules: ${data.error}`);
+
+  /* -------------------------------------------
+     Delete a saved schedule by name
+  ------------------------------------------- */
+  async function handleDeleteSaved(name) {
+    // STEP 1 — First confirmation
+    const firstConfirm = window.confirm(
+      `Are you sure you want to delete "${name}"?`
+    );
+    if (!firstConfirm) return;
+
+    // STEP 2 — Second confirmation
+    const secondConfirm = window.confirm(
+      `This action cannot be undone.\n\nDelete "${name}" permanently?`
+    );
+    if (!secondConfirm) return;
+
+    // Un-highlight if active
+    const idx = saved.findIndex((s) => s.name === name);
+    if (idx === activeIndex) {
+      setActiveIndex(null);
+    }
+
+    // STEP 3 — Execute delete (we do NOT check res.success)
+    await removeSaved(name);
+
+    // STEP 4 — Always alert success
+    alert(`Schedule "${name}" deleted successfully.`);
+  }
+
+
+  /* -------------------------------------------
+     Save button → open modal
+  ------------------------------------------- */
+  function handleSave() {
+    if (schedules.length === 0) {
+      alert("No schedule to save. Generate or load a schedule first.");
       return;
     }
 
-    if (!Array.isArray(data) || data.length === 0) {
-      alert("No possible schedules found.");
+    setSaveMode("new");
+    setSaveName("");
+    setSaveExistingName("");
+    setShowSaveModal(true);
+  }
+
+
+  /* -------------------------------------------
+     Confirm save (new or overwrite existing)
+  ------------------------------------------- */
+  async function handleSaveConfirm() {
+    if (schedules.length === 0) {
+      alert("No schedule to save.");
       return;
     }
 
-    setSchedules(data);
-    setCurrentIndex(0);
-  }
+    const schedule = schedules[currentIndex];
+    let nameToUse = "";
 
-  /* Expand timetable entries */
-  function expandSectionEntries({ data }) {
-    if (!data.day || data.day.startsWith("Not") ||
-        !data.time || data.time.startsWith("Not")) return [];
-
-    const days = data.day.split("|");
-    const times = data.time.split("|");
-    const locs = data.location.split("|");
-
-    const map = { M:"1", T:"2", W:"3", R:"4", F:"5", S:"6", U:"0" };
-
-    const result = [];
-
-    for (let i = 0; i < days.length; i++) {
-      const day = days[i];
-      const time = times[i];
-      const loc = locs[i] ?? locs[locs.length - 1];
-
-      if (!time.includes("-")) continue;
-
-      const [s, e] = time.split("-");
-      const start = `${s.slice(0,2)}:${s.slice(2)}`;
-      const end   = `${e.slice(0,2)}:${e.slice(2)}`;
-
-      result.push({
-        dayIndex: map[day],
-        start,
-        end,
-        location: loc
-      });
-    }
-
-    return result;
-  }
-
-  /* Convert DB row → timetable rows */
-  function convertDBRowToTimetableSections(row) {
-    const expanded = expandSectionEntries({ data: row });
-    if (!expanded || expanded.length === 0) return [];
-
-    const dayMapBack = {
-      "0": "Sun",
-      "1": "Mon",
-      "2": "Tue",
-      "3": "Wed",
-      "4": "Thu",
-      "5": "Fri",
-      "6": "Sat"
-    };
-
-    return expanded.map(entry => ({
-      id: `${row.subjectID}-${row.classID}-${row.sectionID}-${entry.dayIndex}`,
-      courseId: `${row.subjectID} ${row.classID}`,
-      label: row.sectionID,
-      days: [dayMapBack[entry.dayIndex]],
-      start: entry.start,
-      end: entry.end,
-      location: entry.location
-    }));
-  }
-
-  /* Convert selected schedule → displayed sections */
-  useEffect(() => {
-    async function loadSections() {
-      if (schedules.length === 0) {
-        setDisplayedSections([]);
+    if (saveMode === "new") {
+      if (!saveName.trim()) {
+        alert("Please enter a name for the new schedule.");
         return;
       }
-
-      const schedule = schedules[currentIndex];
-      let result = [];
-
-      for (const [courseKey, secList] of Object.entries(schedule)) {
-        const [subjectID, classID] = courseKey.split("+");
-
-        for (const secID of secList) {
-          const res = await fetch(
-            `/api/sections?subjectID=${subjectID}&classID=${classID}&sectionID=${secID}`
-          );
-
-          if (!res.ok) {
-            console.error(`Failed to fetch section ${secID}`);
-            continue;
-          }
-
-          const dbRow = await res.json();
-          const converted = convertDBRowToTimetableSections(dbRow);
-          result.push(...converted);
-        }
+      nameToUse = saveName.trim();
+    } else {
+      if (!saveExistingName) {
+        alert("Please select an existing schedule to overwrite.");
+        return;
       }
-
-      setDisplayedSections(result);
+      nameToUse = saveExistingName;
     }
 
-    loadSections();
-  }, [schedules, currentIndex]);
+    const overwrite = saveMode === "existing";
 
-  /* ------------------------------------------- */
-  /* Render                                      */
-  /* ------------------------------------------- */
+    const res = await saveSchedule(nameToUse, schedule, overwrite);
+
+    if (!res.success) {
+      if (res.nameConflict) {
+        alert("A schedule with that name already exists.");
+      } else {
+        alert("Save failed.");
+      }
+      return;
+    }
+
+    if (res.duplicate) {
+      alert("This exact schedule was already saved.");
+    } else {
+      alert("Schedule saved!");
+    }
+
+    setShowSaveModal(false);
+    await reloadSaved();
+  }
+
+
+  /* -------------------------------------------
+     Render
+  ------------------------------------------- */
   return (
     <div className="page-container">
+      {/* TOP ROW */}
       <div className="top-row">
         <SubjectSearch
           subjectQuery={subjectQuery}
@@ -302,11 +377,14 @@ export default function MainPage({ onLogout }) {
         </button>
       </div>
 
+      {/* BOTTOM ROW: Timetable | ChosenClasses | SavedSidebar */}
       <div className="bottom-row">
+        {/* LEFT: Timetable */}
         <div className="timetable-area">
           <Timetable sections={displayedSections} />
         </div>
 
+        {/* MIDDLE: Chosen classes + Generate/Save controls */}
         <div>
           <ChosenClasses
             chosenClasses={chosenClasses}
@@ -315,16 +393,32 @@ export default function MainPage({ onLogout }) {
             handleNext={handleNext}
             handlePrev={handlePrev}
             handleClear={handleClear}
+            handleSave={handleSave}
           />
-
-          {/* Need to figure out where to place this in for clarity*/}
-          <div className="save-row">
-            <button className="save-btn" onClick={handleSave}>
-              Save Schedule
-            </button>
-          </div>
         </div>
+
+        {/* RIGHT: Saved schedules sidebar */}
+        <SavedSchedulesSidebar
+          saved={saved}
+          activeIndex={activeIndex}
+          onLoad={handleLoadSaved}
+          onDelete={handleDeleteSaved}
+        />
       </div>
+
+      {/* SAVE MODAL */}
+      <SaveModal
+        visible={showSaveModal}
+        mode={saveMode}
+        setMode={setSaveMode}
+        nameNew={saveName}
+        setNameNew={setSaveName}
+        nameExisting={saveExistingName}
+        setNameExisting={setSaveExistingName}
+        existingNames={saved.map((s) => s.name)}
+        onSave={handleSaveConfirm}
+        onCancel={() => setShowSaveModal(false)}
+      />
     </div>
   );
 }

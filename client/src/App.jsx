@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import LoginPage from "./pages/LoginPage.jsx";
 import MainPage from "./pages/MainPage.jsx";
+import SignupPage from "./pages/SignupPage.jsx";
 import "./App.css";
 
 export default function App() {
@@ -16,8 +17,13 @@ export default function App() {
     setUserID(null);   // clear userID
     setPage("login");  // go back to login page
   }
-
-  return page === "login"
-    ? <LoginPage onLogin={handleLogin} />
-    : <MainPage userID={userID} onLogout={handleLogout} />;
+  if (page === "signup"){
+    return <SignupPage onSignup={() => setPage("login")} onLoginPage={() => setPage("login")} />
+  }
+  else if (page === "login"){
+    return <LoginPage onLogin={handleLogin} onSignupPage={() => setPage("signup")}/>
+  }
+  else{
+    return <MainPage userID={userID} onLogout={handleLogout} />;
+  }
 }

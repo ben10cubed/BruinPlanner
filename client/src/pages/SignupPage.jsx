@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import "../Authentication.css";
 
-export default function LoginPage({ onLogin, onSignupPage }) {
+export default function SignupPage({ onSignup, onLoginPage }) {
   const usernameRef = useRef();
   const passwordRef = useRef();
   const [error, setError] = useState(null);
@@ -18,19 +18,19 @@ export default function LoginPage({ onLogin, onSignupPage }) {
       return;
     }
     else if (!password) {
-      setError("Incorrect password.");
+      setError("Please enter a valid password.");
       return;
     }
 
     try {
-      const res = await fetch("/api/login", { 
+      const res = await fetch("/api/registration", { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
       if (res.ok) {
-        onLogin(username); // This calls onLogin with the correct username
+        onSignup();
       } else {
         const data = await res.json();
         setError(data.error);
@@ -44,7 +44,7 @@ export default function LoginPage({ onLogin, onSignupPage }) {
     <div className="login-container">
       <div className="login-card">
         <h2 className = "login-header">Login</h2>
-        <p className="login-subtext">Sign in to continue</p>
+        <p className="login-subtext">Sign up to continue</p>
 
         {error && (
           <div className="error-banner">
@@ -80,12 +80,12 @@ export default function LoginPage({ onLogin, onSignupPage }) {
           </div>
 
           <button type="submit" onClick={handleSubmit} className="login-button">
-              Login
+              Sign Up
           </button>
         </form>
         <div className="auth-toggle-text">
-          Don't have an account?{" "}
-          <button className="auth-toggle-link" onClick={onSignupPage}>
+          Already have an account?{" "}
+          <button className="auth-toggle-link" onClick={onLoginPage}>
             Sign up
           </button>
         </div>

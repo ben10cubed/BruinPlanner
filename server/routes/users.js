@@ -8,6 +8,7 @@ import {
   userScheduleExists,
   loadUserSchedules,
   deleteUserScheduleByName,
+  userNameExists
 } from "../db/user.js";
 
 export default function usersRoute(db) {
@@ -132,7 +133,7 @@ export default function usersRoute(db) {
       // --------------------------------------------------------
 
       // For some reason, userNameExists doesn't work.
-      // So now I just manually check it
+      // So now I just manually check
       const savedSchedules = loadUserSchedules(db, userIDStr);
 
       // Check name conflict manually

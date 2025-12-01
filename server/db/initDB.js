@@ -70,6 +70,13 @@ export async function initDB() {
     );
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS loginData (
+      username TEXT PRIMARY KEY,
+      passwordHash TEXT
+    );
+  `);
+
   // -------------------------------------------------------------
   // Allows MULTIPLE schedules per user
   // -------------------------------------------------------------
@@ -95,6 +102,5 @@ export async function initDB() {
     fs.writeFileSync(DB_FILE, Buffer.from(data));
     console.log("[DB] Saved to:", DB_FILE);
   };
-
   return db;
 }
