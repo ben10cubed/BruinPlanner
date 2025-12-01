@@ -1,7 +1,7 @@
 import he from "he";
 
 //Use REGEX to scrape all class related information from fetched HTML
-function getClassData(classHTML, subjectID, classID, lecture_num=null) {
+export function getClassData(classHTML, subjectID, classID, lecture_num=null) {
 
     //Order of data in regex
     const Column = Object.freeze({
@@ -562,7 +562,7 @@ async function fetchDiscussions(subject_code, course_ID, term, lecture_num) {
     lecture_num: optional parameter; if it is entered, then it returns the discussion sections corresponding to that lecture. If not, then it just returns the lectures
 */
 
-async function fetchCourse(subject_code, course_ID, term, lectureID=null) {
+export async function fetchCourse(subject_code, course_ID, term, lectureID=null) {
     if(lectureID === null) {
         return fetchLectures(subject_code, course_ID, term);
     }
