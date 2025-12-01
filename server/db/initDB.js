@@ -35,5 +35,9 @@ export async function initDB() {
         instructor TEXT,
         PRIMARY KEY (subjectID, classID, sectionID)
         );`);
+    db.run(`CREATE TABLE IF NOT EXISTS loginData (
+            username TEXT PRIMARY KEY,
+            passwordHash TEXT
+            );`);
   return db;
 }
