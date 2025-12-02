@@ -9,7 +9,7 @@ body, #root {
   justify-content: center;
   background-color: #f9fafb;
   font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  flex: none !important;
+  flex-direction: column;
 }
 
 .login-card {
@@ -108,4 +108,33 @@ body, #root {
   border: none;
   padding: 0;
   text-decoration: underline;
+}
+
+/* Banner outside the signup box */
+.status-banner-outside {
+  min-height: 25px;
+  margin-top: 20px;
+
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease-in-out;
+
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.status-banner-outside.show {
+  opacity: 1;
+  visibility: visible;
+  background-color: #fddddd;
+  border: 1px solid #f7bbbb;
+  color: red;
+}
+
+.status-banner-outside.success {
+  background-color: #ddf8dd !important;
+  border-color: #b8e6b8 !important;
+  color: #0f7c0f !important;
 }

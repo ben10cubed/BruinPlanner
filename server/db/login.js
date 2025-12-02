@@ -10,6 +10,9 @@ export async function createUser(db, username, password) {
     if (user.username) {
       return -1; // Username already exists
     }
+    else if ((password.length < 8) || (username.length < 4)){
+      return -2; // Invalid username or password length
+    }
     else {
       // Username does not exist, create new user
       const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -18,7 +21,7 @@ export async function createUser(db, username, password) {
     }
   } catch (err) {
     console.error("Error creating user:", err);
-    return -2; // Error in creating user
+    return -3; // Error in creating user
   }
 }
 

@@ -17,51 +17,46 @@ export default function LoginPage({ onLogin, onSignupPage }) {
       setError("Please enter a valid username.");
       return;
     }
-    else if (!password) {
+    if (!password) {
       setError("Incorrect password.");
       return;
     }
 
     try {
-      const res = await fetch("/api/login", { 
+      const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
       if (res.ok) {
-        onLogin(username); // This calls onLogin with the correct username
+        onLogin(username);
       } else {
         const data = await res.json();
         setError(data.error);
       }
     } catch (err) {
-      setError("An unexpected error occurred, Please try again.");
+      setError("An unexpected error occurred. Please try again.");
     }
   };
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <h2 className = "login-header">Login</h2>
-        <p className="login-subtext">Sign in to continue</p>
 
-        {error && (
-          <div className="error-banner">
-            {error}
-          </div>
-        )}
+      <div className="login-card">
+        <h2 className="login-header">Login</h2>
+        <p className="login-subtext">Sign in to continue</p>
 
         <form className="login-form">
           <div className="input-group">
             <label className="input-label">
               Username
-              <input 
-                  type="text" 
-                  required 
-                  placeholder="Enter username" 
-                  className="login-input"
-                  ref={usernameRef} 
+              <input
+                type="text"
+                placeholder="Enter username"
+                className="login-input"
+                ref={usernameRef}
+                required
               />
             </label>
           </div>
@@ -69,20 +64,25 @@ export default function LoginPage({ onLogin, onSignupPage }) {
           <div className="input-group">
             <label className="input-label">
               Password
-              <input 
-                  type="password" 
-                  required 
-                  placeholder="Enter password" 
-                  className="login-input"
-                  ref={passwordRef} 
+              <input
+                type="password"
+                placeholder="Enter password"
+                className="login-input"
+                ref={passwordRef}
+                required
               />
             </label>
           </div>
 
-          <button type="submit" onClick={handleSubmit} className="login-button">
-              Login
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="login-button"
+          >
+            Login
           </button>
         </form>
+
         <div className="auth-toggle-text">
           Don't have an account?{" "}
           <button className="auth-toggle-link" onClick={onSignupPage}>
@@ -90,6 +90,11 @@ export default function LoginPage({ onLogin, onSignupPage }) {
           </button>
         </div>
       </div>
+
+      <div className={`status-banner-outside ${error ? "show" : ""}`}>
+        {error || ""}
+      </div>
+
     </div>
   );
 }
