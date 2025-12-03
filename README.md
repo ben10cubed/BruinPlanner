@@ -30,7 +30,7 @@ After cloning, to prepare the web-app:
 ### End-to-End Diagram:
 ![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram1v5.svg)
 
-### Seuqnece Diagram:
+### Sequnece Diagram:
 ![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram2v4.svg)
 
 
