@@ -370,7 +370,14 @@ function generateToken(subjectCode, courseID) {
     return `${base}${salt}`;
 }
 
-async function fetchLectures(subject_code, course_ID, term) {
+/*inputs
+    subject_code: subject ID (e.g. "COM SCI") - retrieved from Ben's code
+    course_ID: course number (e.g. "35L") - retrieved from Ben's code
+    term: e.g. "26W" - set manually
+    lecture_num: optional parameter; if it is entered, then it returns the discussion sections corresponding to that lecture. If not, then it just returns the lectures
+*/
+
+async function fetchCourse(subject_code, course_ID, term="26W", lecture_num=null, seqNum=null) {
     const url_base = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
 
     const Token = Buffer.from(getTokenStr(subject_code, course_ID), "utf8").toString("base64");
@@ -379,10 +386,10 @@ async function fetchLectures(subject_code, course_ID, term) {
         Term: term,
         SubjectAreaCode: subject_code,
         CatalogNumber: getCatalogStrPadded(course_ID),
-        IsRoot: true,
+        IsRoot: lecture_num == null ? true : false,
         SessionGroup: "%",
-        ClassNumber: null,
-        SequenceNumber: null,
+        ClassNumber: lecture_num === null ? null : " 00"+String(lecture_num)+"  ",
+        SequenceNumber: seqNum,
         Path: getSubjectCodeWithoutSpace(subject_code) + getCatalogStr(course_ID),
         MultiListedClassFlag: isMultiListed(course_ID), //From testing, this doesn't actually seem to matter as an input
         Token: Token
@@ -439,143 +446,8 @@ async function fetchLectures(subject_code, course_ID, term) {
     }
 }
 
-function generateCourseCode(subjectID, courseID) {
-    // Remove all spaces from subjectID
-    subjectID = subjectID.replace(/\s+/g, "");
-
-    // Extract numeric part and letter part
-    const match = courseID.match(/^(\d+)([A-Z]*)$/i);
-    if (!match) throw new Error("Invalid courseID format");
-
-    let [_, numPart, letterPart] = match;
-
-    // Pad numeric part to 4 digits
-    numPart = numPart.padStart(4, '0');
-
-    // Return concatenated course code
-    return subjectID + numPart + letterPart.toUpperCase();
-}
-
-function extractLectureIDs(html, courseCode) {
-    console.log(courseCode);
-    const regex = new RegExp(`id="(\\d+)_${courseCode}"`, 'g');
-    const ids = [];
-    let match;
-    while ((match = regex.exec(html)) !== null) {
-        ids.push(match[1]);
-    }
-    return ids;
-}
-
-async function fetchDiscussions(subject_code, course_ID, term, lecture_num) {
-    if(lecture_num >= 10) {
-        lecture_num = 1;
-    }
-    // Fetch the main lectures HTML
-    const lectureHTML = await fetchLectures(subject_code, course_ID, term);
-
-    // Generate the course code (e.g., "MATH0031A")
-    const courseCode = generateCourseCode(subject_code, course_ID);
-
-    // Extract lecture IDs from the HTML
-    const ids = extractLectureIDs(lectureHTML, courseCode);
-
-    //console.log(ids);
-    
-    if (!ids || ids.length === 0) {
-        console.warn(`No lecture IDs found for ${courseCode}`);
-        return null;
-    }
-
-    // Pick the lecture ID corresponding to lecture_num
-    // Assumes ids are in order: Lec 1 = ids[0], Lec 2 = ids[1], etc.
-    const lectureID = ids[lecture_num - 1];
-    if (!lectureID) {
-        console.warn(`Lecture ID not found for lecture number ${lecture_num}`);
-        return null;
-    }
-
-    const url_base = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
-
-    // Generate token (base64) for this lecture
-    const Token = Buffer.from(getTokenStr(subject_code, course_ID, lectureID), "utf8").toString("base64");
-
-    const model = {
-        Term: term,
-        SubjectAreaCode: subject_code,
-        CatalogNumber: getCatalogStrPadded(course_ID),
-        IsRoot: false,
-        SessionGroup: null,
-        ClassNumber: ` 00${lecture_num}  `,
-        SequenceNumber: "1",
-        Path: lectureID,  // Use the unique lecture ID in Path
-        MultiListedClassFlag: isMultiListed(course_ID),
-        Token: Token
-    };
-
-    let model_encoded = new URLSearchParams({ model: JSON.stringify(model) }).toString();
-
-    const FilterFlags = {
-        enrollment_status: "O,W,C,X,T,S",
-        advanced: "y",
-        meet_days: "M,T,W,R,F,S,U",
-        start_time: "8:00 am",
-        end_time: "10:00 pm",
-        meet_locations: null,
-        meet_units: null,
-        instructor: null,
-        class_career: null,
-        impacted: null,
-        enrollment_restrictions: null,
-        enforced_requisites: null,
-        individual_studies: null,
-        summer_session: null
-    };
-
-    let FilterFlags_encoded = new URLSearchParams({
-        FilterFlags: JSON.stringify(FilterFlags)
-    }).toString();
-
-    const timestamp = Date.now().toString();
-    const url = `${url_base}${model_encoded}&${FilterFlags_encoded}&_=${timestamp}`;
-
-    const headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest"
-    };
-
-    try {
-        const response = await fetch(url, { headers });
-        const text = await response.text();
-        return text;
-    } catch (err) {
-        console.error("Request failed:", err);
-        return null;
-    }
-}
-
-/*inputs
-    subject_code: subject ID (e.g. "COM SCI") - retrieved from Ben's code
-    course_ID: course number (e.g. "35L") - retrieved from Ben's code
-    term: e.g. "26W" - set manually
-    lecture_num: optional parameter; if it is entered, then it returns the discussion sections corresponding to that lecture. If not, then it just returns the lectures
-*/
-
-async function fetchCourse(subject_code, course_ID, term, lectureID=null) {
-    if(lectureID === null) {
-        return fetchLectures(subject_code, course_ID, term);
-    }
-    let index = 0;
-    while(lectureID[index] != " ") {
-        index++;
-    }
-    let lecture_num = parseInt(lectureID.substring(index+1));
-    return fetchDiscussions(subject_code, course_ID, term, lecture_num);
-}
-
 //className is only useful for FIAT LX 19 special case classes
-async function getSectionInfo(subjectID, classID, className="") {
+export async function getSectionInfo(subjectID, classID, className="") {
   if (!subjectID || !classID) {
     return [];
   } 

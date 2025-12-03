@@ -132,8 +132,6 @@ export default function usersRoute(db) {
       // 1. NAME CONFLICT CHECK
       // --------------------------------------------------------
 
-      // For some reason, userNameExists doesn't work.
-      // So now I just manually check
       const savedSchedules = loadUserSchedules(db, userIDStr);
 
       // Check name conflict manually
