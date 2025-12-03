@@ -12,7 +12,6 @@ export default function ChosenClasses({
   return (
     <div className="chosen-classes-panel">
 
-      {/* Header */}
       <div className="chosen-header">
         <h3>Chosen Classes</h3>
         <button className="generate-btn" onClick={handleGenerate}>
@@ -23,7 +22,6 @@ export default function ChosenClasses({
         </button>
       </div>
 
-      {/* Scrollable list */}
       <div className="chosen-list">
         {chosenClasses.length === 0 && (
           <div className="empty-msg">No classes chosen.</div>
@@ -42,7 +40,6 @@ export default function ChosenClasses({
         ))}
       </div>
 
-      {/* FIXED FOOTER BUTTONS */}
       <div className="chosen-fixed-footer">
         <button onClick={handlePrev}>Previous</button>
         <button onClick={handleClear}>Clear</button>
