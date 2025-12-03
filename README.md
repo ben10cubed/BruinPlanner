@@ -38,7 +38,7 @@ Directly under BruinPlanner folder:
 ## Diagrams:
 
 ### End-to-End Diagram:
-![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram1v5.svg)
+![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram1v5simple.png)
 
 ### Sequnece Diagram:
 ![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram2v4.svg)
