@@ -25,6 +25,16 @@ After cloning, to prepare the web-app:
       After a successful execution, an output similar to "Local:   http://localhost:5173/" should appear.
       Due to limited time, user information is stored locally, so the same account will not work on a different device.
 
+## How to run E2E tests
+Directly under BruinPlanner folder:
+1. Run npm install
+2. Then run npx playwright tests
+- Ensure that both front/backend are successfully running
+3. The E2E tests will test registration and class/subject searching
+  - Schedule testing is slightly more complex
+  - It depends on whether a class still has spots
+  - More reliable to test by hand
+
 ## Diagrams:
 
 ### End-to-End Diagram:
