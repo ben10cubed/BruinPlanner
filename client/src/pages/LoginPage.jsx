@@ -47,7 +47,7 @@ export default function LoginPage({ onLogin, onSignupPage }) {
         <h2 className="login-header">Login</h2>
         <p className="login-subtext">Sign in to continue</p>
 
-        <form className="login-form">
+        <form className="login-form" onSubmit={handleSubmit}>
           <div className="input-group">
             <label className="input-label">
               Username
@@ -76,12 +76,12 @@ export default function LoginPage({ onLogin, onSignupPage }) {
 
           <button
             type="submit"
-            onClick={handleSubmit}
             className="login-button"
           >
             Login
           </button>
         </form>
+
 
         <div className="auth-toggle-text">
           Don't have an account?{" "}

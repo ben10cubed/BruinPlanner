@@ -35,8 +35,8 @@ test.describe('Authentication Flow (Login + Sign Up)', () => {
   test('successful login shows MainPage', async ({ page }) => {
     await page.goto('/');
 
-    await page.fill('input[placeholder="Enter username"]', 'ben10');
-    await page.fill('input[placeholder="Enter password"]', 'bruhmoment');
+    await page.fill('input[placeholder="Enter username"]', 'testuser');
+    await page.fill('input[placeholder="Enter password"]', 'password123');
 
     await page.getByRole('button', { name: 'Login' }).click();
 

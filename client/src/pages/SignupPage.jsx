@@ -46,12 +46,12 @@ export default function SignupPage({ onSignup, onLoginPage }) {
 
   return (
     <div className="login-container">
-
       <div className="login-card">
         <h2 className="login-header">Sign Up</h2>
         <p className="login-subtext">Create an account to continue</p>
 
-        <form className="login-form">
+        {/* ⭐ Correctly wired form */}
+        <form className="login-form" onSubmit={handleSubmit}>
           <div className="input-group">
             <label className="input-label">
               Username
@@ -78,11 +78,7 @@ export default function SignupPage({ onSignup, onLoginPage }) {
             </label>
           </div>
 
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            className="login-button"
-          >
+          <button type="submit" className="login-button">
             Sign Up
           </button>
         </form>
@@ -102,7 +98,6 @@ export default function SignupPage({ onSignup, onLoginPage }) {
       >
         {(error || success) && (error || success)}
       </div>
-
     </div>
   );
 }
