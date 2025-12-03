@@ -29,7 +29,7 @@ After cloning, to prepare the web-app:
 Directly under BruinPlanner folder:
 1. Run npm install
 2. Then run npx playwright tests
-- Ensure that both front/backend are successfully running
+- Playwright will automatically start back/frontend
 3. The E2E tests will test registration and class/subject searching
   - Schedule testing is slightly more complex
   - It depends on whether a class still has spots
