@@ -18,4 +18,13 @@ To prepare the web-app after cloning the repository:
       This initializes the frontend where the user interface. The user should be able to register an account.
       Due to limited time, user information is stored locally, so the same account will not work on a different device.
 
+## Diagrams:
+
+### End-to-End Diagram:
+![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram1v3.png)
+
+### Seuqnece Diagram:
+![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram2v3.svg)
+
+
 
