@@ -21,10 +21,10 @@ To prepare the web-app after cloning the repository:
 ## Diagrams:
 
 ### End-to-End Diagram:
-![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram1v3.png)
+![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram1v5.svg)
 
 ### Seuqnece Diagram:
-![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram2v3.svg)
+![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram2v4.svg)
 
 
 
