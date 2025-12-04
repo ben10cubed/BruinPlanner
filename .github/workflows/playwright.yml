@@ -30,7 +30,9 @@ jobs:
       run: npm install
       working-directory: ./
 
-
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+      working-directory: ./ 
     # -----------------------------
     # Install dependencies (server)
     # -----------------------------
