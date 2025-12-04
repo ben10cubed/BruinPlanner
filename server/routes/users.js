@@ -14,16 +14,15 @@ import {
 export default function usersRoute(db) {
   const router = express.Router();
 
-  // AES-256 key (base64 → 32 bytes)
+  // Not secure, but don't make many other options.
+  // One possible alternative is to store the key as an environment variable.
   const KEY = Buffer.from(
     "5wYAm0tfNh/aheCbV6KeqzEGTY2DZ2tmU366vosugek=",
     "base64"
   );
   const ALGO = "aes-256-gcm";
 
-  // --------------------------------------------------------------------------
   // Encryption helpers
-  // --------------------------------------------------------------------------
   function encrypt(text) {
     const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv(ALGO, KEY, iv);
@@ -55,9 +54,7 @@ export default function usersRoute(db) {
     return crypto.createHash("sha256").update(canonical).digest("hex");
   }
 
-  // --------------------------------------------------------------------------
-  // Canonicalize + Validate (synchronous for sql.js)
-  // --------------------------------------------------------------------------
+  // Canonicalize + Validate
   function canonicalizeAndValidate(schedule, db) {
     const keys = Object.keys(schedule).sort();
     const parts = [];
@@ -92,9 +89,7 @@ export default function usersRoute(db) {
     };
   }
 
-  // --------------------------------------------------------------------------
   // Convert canonical string → schedule object
-  // --------------------------------------------------------------------------
   function canonicalToScheduleObject(canonical) {
     const schedule = {};
     const parts = canonical.split("|");
@@ -109,10 +104,8 @@ export default function usersRoute(db) {
     return schedule;
   }
 
-  // --------------------------------------------------------------------------
   // POST /users/save
   // Body: { userID, schedule, name }
-  // --------------------------------------------------------------------------
   router.post("/save", (req, res) => {
     try {
       const { userID, schedule, name } = req.body;
@@ -128,12 +121,7 @@ export default function usersRoute(db) {
         });
       }
 
-      // --------------------------------------------------------
-      // 1. NAME CONFLICT CHECK
-      // --------------------------------------------------------
-
-      // For some reason, userNameExists doesn't work.
-      // So now I just manually check
+      // NAME CONFLICT CHECK
       const savedSchedules = loadUserSchedules(db, userIDStr);
 
       // Check name conflict manually
@@ -148,9 +136,7 @@ export default function usersRoute(db) {
       }
 
 
-      // --------------------------------------------------------
-      // 2. Canonicalize + Validate
-      // --------------------------------------------------------
+      // Canonicalize + Validate
       const result = canonicalizeAndValidate(schedule, db);
 
       if (!result.valid) {
@@ -164,9 +150,7 @@ export default function usersRoute(db) {
       const canonical = result.canonical;
       const hash = hashCanonical(canonical);
 
-      // --------------------------------------------------------
-      // 3. DUPLICATE SCHEDULE CHECK
-      // --------------------------------------------------------
+      // DUPLICATE SCHEDULE CHECK
       const dup = userScheduleExists(db, userIDStr, hash);
 
       if (dup) {
@@ -177,9 +161,7 @@ export default function usersRoute(db) {
         });
       }
 
-      // --------------------------------------------------------
-      // 4. Encrypt and save
-      // --------------------------------------------------------
+      // Encrypt and save
       const enc = encrypt(canonical);
 
       insertUserSchedule(
@@ -210,11 +192,9 @@ export default function usersRoute(db) {
     }
   });
 
-  // --------------------------------------------------------------------------
   // POST /users/load
   // Body: { userID }
   // Returns: [{ name, schedule }]
-  // --------------------------------------------------------------------------
   router.post("/load", (req, res) => {
     try {
       const { userID } = req.body;
@@ -249,10 +229,8 @@ export default function usersRoute(db) {
     }
   });
 
-  // --------------------------------------------------------------------------
   // POST /users/delete
   // Body: { userID, name }
-  // --------------------------------------------------------------------------
   router.post("/delete", (req, res) => {
     try {
       const { userID, name } = req.body;

@@ -231,7 +231,6 @@ export default function MainPage({ userID, onLogout }) {
   function handleClear() {
     setChosenClasses([]);
     setActiveIndex(null);
-    // Clear timetable by loading an empty "schedule"
     loadFromSaved({});
   }
 
@@ -243,7 +242,6 @@ export default function MainPage({ userID, onLogout }) {
     const item = saved[index];
     if (!item) return;
 
-    // Overwrite current generated schedules with this saved one
     loadFromSaved(item.schedule);
     setActiveIndex(index);
   }
@@ -253,28 +251,23 @@ export default function MainPage({ userID, onLogout }) {
      Delete a saved schedule by name
   ------------------------------------------- */
   async function handleDeleteSaved(name) {
-    // STEP 1 — First confirmation
     const firstConfirm = window.confirm(
       `Are you sure you want to delete "${name}"?`
     );
     if (!firstConfirm) return;
 
-    // STEP 2 — Second confirmation
     const secondConfirm = window.confirm(
       `This action cannot be undone.\n\nDelete "${name}" permanently?`
     );
     if (!secondConfirm) return;
 
-    // Un-highlight if active
     const idx = saved.findIndex((s) => s.name === name);
     if (idx === activeIndex) {
       setActiveIndex(null);
     }
 
-    // STEP 3 — Execute delete (we do NOT check res.success)
     await removeSaved(name);
 
-    // STEP 4 — Always alert success
     alert(`Schedule "${name}" deleted successfully.`);
   }
 
@@ -350,7 +343,6 @@ export default function MainPage({ userID, onLogout }) {
   ------------------------------------------- */
   return (
     <div className="page-container">
-      {/* TOP ROW */}
       <div className="top-row">
         <SubjectSearch
           subjectQuery={subjectQuery}
@@ -377,14 +369,11 @@ export default function MainPage({ userID, onLogout }) {
         </button>
       </div>
 
-      {/* BOTTOM ROW: Timetable | ChosenClasses | SavedSidebar */}
       <div className="bottom-row">
-        {/* LEFT: Timetable */}
         <div className="timetable-area">
           <Timetable sections={displayedSections} />
         </div>
 
-        {/* MIDDLE: Chosen classes + Generate/Save controls */}
         <div>
           <ChosenClasses
             chosenClasses={chosenClasses}
@@ -397,7 +386,6 @@ export default function MainPage({ userID, onLogout }) {
           />
         </div>
 
-        {/* RIGHT: Saved schedules sidebar */}
         <SavedSchedulesSidebar
           saved={saved}
           activeIndex={activeIndex}
@@ -406,7 +394,6 @@ export default function MainPage({ userID, onLogout }) {
         />
       </div>
 
-      {/* SAVE MODAL */}
       <SaveModal
         visible={showSaveModal}
         mode={saveMode}

@@ -1,0 +1,48 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.19.0
+
+    # -----------------------------
+    # Install dependencies (client)
+    # -----------------------------
+    - name: Install frontend dependencies
+      run: npm install
+      working-directory: ./client
+
+    - name: Install libaries in root + Playwright
+      run: npm install
+      working-directory: ./
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+      working-directory: ./ 
+    # -----------------------------
+    # Install dependencies (server)
+    # -----------------------------
+    - name: Install backend dependencies
+      run: npm install
+      working-directory: ./server
+
+    # -----------------------------
+    # Run Playwright tests
+    # -----------------------------
+    - name: Run Playwright tests
+      run: npx playwright test
+      working-directory: ./

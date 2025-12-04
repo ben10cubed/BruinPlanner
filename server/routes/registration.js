@@ -12,6 +12,8 @@ export default function registrationRoute(db) {
 
       if (result === 0) {
         res.status(200).json({ message: "User created" });
+      } else if (result === -2) {
+        res.status(401).json({ error: "Invalid username or password length" });
       } else if (result === -1) {
         res.status(401).json({ error: "Username already exists" });
       } else {

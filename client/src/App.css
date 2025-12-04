@@ -1,4 +1,3 @@
-/* ===== Global Reset ===== */
 body {
   background: #f9fafb;
   font-family: "Inter", "Segoe UI", sans-serif;
@@ -12,7 +11,6 @@ h2, h3, h4 {
   margin: 0 0 8px 0;
 }
 
-/* ===== Layout Containers ===== */
 .main-container,
 .page-container {
   position: relative;
@@ -53,7 +51,6 @@ h2, h3, h4 {
   border-color: #0077ff;
 }
 
-/* ===== Dropdown ===== */
 .dropdown {
   position: absolute;
   background: white;
@@ -76,7 +73,6 @@ h2, h3, h4 {
   background: #eef2ff;
 }
 
-/* ===== Course Items ===== */
 .course-item {
   border-bottom: 1px solid #f3f3f3;
   padding-bottom: 6px;
@@ -109,7 +105,6 @@ h2, h3, h4 {
   background: #1d4ed8;
 }
 
-/* ===== Scrollbars ===== */
 .search-results::-webkit-scrollbar {
   width: 6px;
 }
@@ -118,7 +113,6 @@ h2, h3, h4 {
   border-radius: 6px;
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 900px) {
   .main-container,
   .page-container {
@@ -141,10 +135,9 @@ h2, h3, h4 {
 
 
 
-/* Chosen classes stays same width, aligns vertically with timetable */
 .chosen-classes-panel {
   width: 260px;
-  height: 700px;       /* match timetable height */
+  height: 700px;    
   overflow-y: auto;
   background: #f7f7f7;
   border: 1px solid #ddd;
@@ -152,7 +145,6 @@ h2, h3, h4 {
   padding: 20px;
 }
 
-/* Top row with two search boxes */
 .top-row {
   display: flex;
   justify-content: center;
@@ -162,7 +154,6 @@ h2, h3, h4 {
   padding: 20px;
 }
 
-/* Bottom row with timetable + chosen classes */
 .bottom-row {
   display: flex;
   justify-content: center;
@@ -172,7 +163,6 @@ h2, h3, h4 {
   margin-top: 20px;
 }
 
-/* Search boxes */
 .search-box-panel {
   width: 550px;
   background: #fafafa;
@@ -182,7 +172,6 @@ h2, h3, h4 {
   position: relative;
 }
 
-/* Chosen classes aligned with timetable */
 .chosen-classes-panel {
   width: 350px;
   height: 720px;
@@ -220,24 +209,22 @@ h2, h3, h4 {
 }
 .fc-timegrid-slot {
   height: 77px !important;
-  border-bottom: none !important;   /* remove 5-min grid lines */
+  border-bottom: none !important;  
 }
 
-/* Keep hour separators visible */
 .fc-timegrid-slot.fc-timegrid-slot-label {
   border-bottom: 1px solid #ccc !important;
 }
 
 .fc-timegrid-slot-label {
   display: flex;
-  align-items: flex-start !important;   /* move text to top of slot */
-  justify-content: flex-start !important; /* move text to left */
-  padding-top: 0px !important;          /* remove vertical centering */
-  padding-left: 1px !important;         /* small left padding */
-  height: auto !important;              /* allow label to sit at top */
+  align-items: flex-start !important;   
+  justify-content: flex-start !important; 
+  padding-top: 0px !important;          
+  padding-left: 1px !important;   
+  height: auto !important;             
 }
 
-/* Make the text slightly smaller & cleaner */
 .fc-timegrid-slot-label .fc-timegrid-slot-label-frame {
   font-size: 13px;
   font-weight: 500;
@@ -251,7 +238,6 @@ h2, h3, h4 {
   background: white !important;
 }
 
-/* Optional: place hour at top-left */
 .fc-timegrid-slot-label {
   display: flex !important;
   align-items: flex-start !important;
@@ -260,7 +246,6 @@ h2, h3, h4 {
   padding-left: 4px !important;
 }
 
-/* Ensure internal frame doesn't collapse */
 .fc-timegrid-slot-label-frame {
   display: block !important;
   width: 100% !important;
@@ -305,14 +290,12 @@ h2, h3, h4 {
   position: relative;
 }
 
-/* Scrollable list */
 .chosen-list {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 70px; /* prevent content hiding behind footer */
+  padding-bottom: 70px;
 }
 
-/* Fixed footer inside panel */
 .chosen-fixed-footer {
   position: absolute;
   bottom: 15px;
@@ -356,9 +339,6 @@ h2, h3, h4 {
   background: #2563eb;
 }
 
-/* ===============================
-   Sidebar for Saved Schedules
-   =============================== */
 .saved-schedules-sidebar {
   width: 220px;
   background: #f4f7ff;
@@ -382,10 +362,6 @@ h2, h3, h4 {
   font-style: italic;
 }
 
-
-/* ===============================
-   Saved Schedule Row
-   =============================== */
 .saved-schedule-item {
   display: flex;
   justify-content: space-between;
@@ -402,14 +378,12 @@ h2, h3, h4 {
   background: #e9f0ff;
 }
 
-/* Highlight when selected */
 .saved-schedule-item.active {
   border: 2px solid #003b8e;
   background: #e5edff;
 }
 
 
-/* Left side schedule text */
 .schedule-name {
   font-size: 14px;
   color: #003b8e;
@@ -421,7 +395,6 @@ h2, h3, h4 {
 }
 
 
-/* Delete button */
 .delete-btn {
   background: transparent;
   border: none;
@@ -435,10 +408,6 @@ h2, h3, h4 {
   text-decoration: underline;
 }
 
-
-/* ===============================
-   Modal Overlay
-   =============================== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -452,8 +421,6 @@ h2, h3, h4 {
   z-index: 200;
 }
 
-
-/* Modal Box */
 .modal-box {
   background: white;
   width: 330px;
@@ -469,8 +436,6 @@ h2, h3, h4 {
   font-weight: 600;
 }
 
-
-/* Modal Inputs */
 .modal-input {
   width: 100%;
   margin-top: 8px;
@@ -481,8 +446,6 @@ h2, h3, h4 {
   font-size: 14px;
 }
 
-
-/* Modal Button Row */
 .modal-buttons {
   margin-top: 14px;
   display: flex;
@@ -507,12 +470,6 @@ h2, h3, h4 {
   background: #ccc;
 }
 
-
-/* ===============================
-   Layout Fixes
-   =============================== */
-
-/* Bottom row: Timetable | ChosenClasses | SavedSidebar */
 .bottom-row {
   display: flex;
   flex-direction: wrap;
@@ -520,7 +477,6 @@ h2, h3, h4 {
   margin-top: 20px;
 }
 
-/* Ensure timetable shrinks/grows correctly */
 .timetable-area {
   flex-grow: 1 1 100%;
   min-width: 1000px;
@@ -531,8 +487,6 @@ h2, h3, h4 {
   padding: 20px;
 }
 
-
-/* Save row under chosen classes */
 .save-row {
   margin-top: 12px;
   display: flex;
