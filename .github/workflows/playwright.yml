@@ -26,8 +26,8 @@ jobs:
       run: npm install
       working-directory: ./client
 
-    - name: Install Playwright at root
-      run: npm install @playwright/test
+    - name: Install libaries in root + Playwright
+      run: npm install
       working-directory: ./
 
 
