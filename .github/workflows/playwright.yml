@@ -26,6 +26,11 @@ jobs:
       run: npm install
       working-directory: ./client
 
+    - name: Install Playwright at root
+      run: npm install @playwright/test
+      working-directory: ./
+
+
     # -----------------------------
     # Install dependencies (server)
     # -----------------------------
