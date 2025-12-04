@@ -38,16 +38,6 @@ jobs:
       run: npm install
       working-directory: ./server
 
-    # If you use bcryptjs instead of bcrypt, it will build instantly.
-    # bcrypt may require build tools. bcryptjs avoids that.
-
-    # -----------------------------
-    # Install Playwright browsers
-    # -----------------------------
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-      working-directory: ./client  # or root, depending on where PW is
-
     # -----------------------------
     # Run Playwright tests
     # -----------------------------
