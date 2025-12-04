@@ -12,11 +12,13 @@ export default defineConfig({
   webServer: [
     {
       command: 'node server/server.js',
+      cwd: './',               // backend starts in root (good)
       port: 3000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run dev',
+      cwd: './client',         // frontend must run inside client directory
       port: 5173,
       reuseExistingServer: !process.env.CI,
     }
