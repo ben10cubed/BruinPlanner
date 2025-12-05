@@ -40,7 +40,7 @@ Directly under BruinPlanner folder:
 ### Overall Project Architecture
 
 #### End-to-End Diagram:
-![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/diagram1v5simple.png)
+![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/diagram1wlogin.png)
 
 #### Sequnece Diagram:
 ![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/diagram2v4.svg)
