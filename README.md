@@ -43,16 +43,17 @@ Directly under BruinPlanner folder:
 ![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/diagram1wlogin.png)
 
 #### Sequnece Diagram:
+Regular subjectID and class search, and schedule generation with alts being instances where subjectID or class is already cached.
 ![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/diagram2v4.svg)
 
 ### Log-in Architecture
 
 #### Sign-up Sequence Diagram:
-
+Regular sign-up sequence with alts accounting for username and password validity checks.
 ![Signupsequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/signupsequence.png)
 
 #### Log-in Sequence Diagram:
-
+Regular log-in sequence with an alt accounting for invalid username.
 ![Signupsequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/loginsequence.png)
 
 #### Log-in Component Diagram:
