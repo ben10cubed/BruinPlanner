@@ -40,24 +40,24 @@ Directly under BruinPlanner folder:
 ### Overall Project Architecture
 
 #### End-to-End Diagram:
-![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram1v5simple.png)
+![End-to-end](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/diagram1v5simple.png)
 
 #### Sequnece Diagram:
-![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagram2v4.svg)
+![Sequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/diagram2v4.svg)
 
 ### Log-in Architecture
 
-### Sign-up Sequence Diagram:
+#### Sign-up Sequence Diagram:
 
-![Signupsequence](https://github.com/xavieryychan/BruinPlanner/blob/main/signupsequence.png)
+![Signupsequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/signupsequence.png)
 
-### Log-in Sequence Diagram:
+#### Log-in Sequence Diagram:
 
-![Signupsequence](https://github.com/xavieryychan/BruinPlanner/blob/main/loginsequence.png)
+![Signupsequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/loginsequence.png)
 
-### Log-in Component Diagram:
+#### Log-in Component Diagram:
 
-![Signupsequence](https://github.com/xavieryychan/BruinPlanner/blob/main/login%20component.png)
+![Signupsequence](https://github.com/xavieryychan/BruinPlanner/blob/main/diagrams/login%20component.png)
 
 
 
