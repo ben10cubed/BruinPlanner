@@ -7,9 +7,25 @@ import {
   insertUserSchedule,
   userScheduleExists,
   loadUserSchedules,
-  deleteUserScheduleByName,
-  userNameExists
+  deleteUserScheduleByName
 } from "../db/user.js";
+/*
+A special note on canonicalization:
+    - I needed a way to ensure that schedules do not duplicate for each user.
+    - To do this, I created a "canonical" string representation of each schedule.
+    - The canonical string is made by sorting the classes and sections in a
+      deterministic order, and joining them with special characters such as + and |.
+    - This canonical string is then hashed using SHA-256, and the hash is stored in the DB.
+    - When a user attempts to save a schedule, the server canonicalizes the schedule,
+      hashes it, and checks if that hash already exists for that user.
+    - If it does, the server rejects the save as a duplicate.
+    - This method ensures that even if the order of classes/sections differs,
+      the same schedule will produce the same canonical string and hash. (Mainly achieved through sorting before joining.)
+  
+For example: Math 32A : [Lec 2, Dis 2A] and COM SCI 35L [Lec 1, Dis 1C]:
+    - Canonical string: "COM SCI+35L+Dis 1C|COM SCI+35L+Lec 1|Math+32A+Dis 2A|Math+32A+Lec 2"
+    - Regardless of which order the classes are passed in, this is the only possible output.
+*/
 
 export default function usersRoute(db) {
   const router = express.Router();
