@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import Timetable from "../components/Timetable.jsx";
+import ClassDetails from "../components/ClassDetails.jsx";
 import SubjectSearch from "../components/SubjectSearch.jsx";
 import ClassSearch from "../components/ClassSearch.jsx";
 import ChosenClasses from "../components/ChosenClasses.jsx";
@@ -372,6 +373,10 @@ export default function MainPage({ userID, onLogout }) {
       <div className="bottom-row">
         <div className="timetable-area">
           <Timetable sections={displayedSections} />
+          
+          <div style={{ marginTop: "20px" }}>
+            <ClassDetails sections={displayedSections} />
+          </div>
         </div>
 
         <div>
