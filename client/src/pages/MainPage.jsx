@@ -32,6 +32,11 @@ export default function MainPage({ userID, onLogout }) {
   const [chosenClasses, setChosenClasses] = useState([]);
 
   /* -------------------------------------------
+      Schedule filters / priorities
+    ------------------------------------------- */
+    const [filters, setFilters] = useState([{ id: "none", value: "" }]);
+
+  /* -------------------------------------------
      Schedules (generated via backend)
   ------------------------------------------- */
   const {
@@ -388,6 +393,8 @@ export default function MainPage({ userID, onLogout }) {
             handlePrev={handlePrev}
             handleClear={handleClear}
             handleSave={handleSave}
+            filters={filters}
+            setFilters={setFilters}
           />
         </div>
 

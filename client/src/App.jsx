@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import LoginPage from "./pages/LoginPage.jsx";
 import MainPage from "./pages/MainPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
-import "./App.css";
+import "./mainPageCss/App.css";
 
 export default function App() {
   const [page, setPage] = useState("login");

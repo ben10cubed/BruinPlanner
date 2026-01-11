@@ -1,4 +1,5 @@
 import React from "react";
+import Filters from "./Filters.jsx";
 
 export default function ChosenClasses({
   chosenClasses,
@@ -7,7 +8,9 @@ export default function ChosenClasses({
   handleNext,
   handlePrev,
   handleClear,
-  handleSave
+  handleSave,
+  filters,
+  setFilters
 }) {
   return (
     <div className="chosen-classes-panel">
@@ -20,6 +23,10 @@ export default function ChosenClasses({
         <button className="save-btn" onClick={handleSave}>
           Save
         </button>
+      </div>
+      <div><section className="filters-section">
+          <Filters priorities={filters} setPriorities={setFilters} />
+        </section>
       </div>
 
       <div className="chosen-list">

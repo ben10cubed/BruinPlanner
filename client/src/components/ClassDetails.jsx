@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import "../ClassDetails.css";
+import "../mainPageCss/ClassDetails.css";
 
 export default function ClassDetails({ sections }) {
   
