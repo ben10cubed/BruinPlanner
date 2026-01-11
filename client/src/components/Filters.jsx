@@ -3,6 +3,8 @@ import "../mainPageCss/Filters.css";
 
 const FILTER_OPTIONS = [
   { id: "none", label: "Select a preference..." },
+  { id: "show_waitlist", label: "Show Waitlist Classes" },
+  { id: "show_closed", label: "Show Closed Classes" },
   { id: "no_early_classes", label: "No Classes Before" },
   { id: "no_late_classes", label: "No Classes After" },
   { id: "no_classes_on_day", label: "No Classes on" },
