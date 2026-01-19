@@ -20,11 +20,13 @@ export default function useTimetableLoader(schedules, currentIndex) {
 
         for (const sec of secList) {
           const row = await fetchSection(subjectID, classID, sec);
+          console.log(row);
           if (row) {
             combined.push(...convertDBRowToTimetableSections(row));
           }
         }
       }
+      console.log(combined)
 
       setSections(combined);
     }

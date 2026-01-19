@@ -51,7 +51,16 @@ export function convertDBRowToTimetableSections(row) {
     "6": "Sat",
   };
 
-  return expanded.map(entry => ({
+  // 1. Extract enrollment count from status string (e.g. "56 of 60" from "Open|56 of 60 Enrolled|...")
+  // We do this because row.enroll contains the Course Title.
+  let enrollCount = "-";
+  if (row.status && row.status.includes("Enrolled")) {
+    const parts = row.status.split("|");
+    const found = parts.find((p) => p.includes("Enrolled"));
+    if (found) enrollCount = found.replace(" Enrolled", "").trim();
+  }
+
+  return expanded.map((entry) => ({
     id: `${row.subjectID}-${row.classID}-${row.sectionID}-${entry.dayIndex}`,
     courseId: `${row.subjectID} ${row.classID}`,
     label: row.sectionID,
@@ -59,5 +68,13 @@ export function convertDBRowToTimetableSections(row) {
     start: entry.start,
     end: entry.end,
     location: entry.location,
+
+    // --- Added Fields ---
+    units: row.units,
+    instructor: row.instructor,
+    status: row.status,
+    waitlist: row.waitlist,
+    enroll: enrollCount, // The count for the UI box
+    description: row.enroll, // Capturing the full title/description
   }));
 }

@@ -16,7 +16,7 @@ async function filterAvailable(db, subjectID, classID, courseData) { //returns n
         let sectionID = data['sectionID'];
         let avail = await getSectionAvail(db, subjectID, classID, sectionID);
         //console.log(avail);
-        if(avail == 'O' || avail == 'W') {
+        if(avail == 'O' || avail == 'W' || avail == 'C') {
             //console.log(data);
             newCourseData.push(data);
         }
