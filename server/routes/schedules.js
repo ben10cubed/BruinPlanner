@@ -19,7 +19,7 @@ export default function schedulesRoute(db) {
       }
 
       //I don't think I use it, but just for clarification
-      const term = "26W";
+      const term = "26S";
 
       for (const entry of list) {
         const { subjectID, classID } = entry;

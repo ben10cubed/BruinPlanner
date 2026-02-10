@@ -1,6 +1,6 @@
 import he from "he";
 
-export async function getClassID(term="26W", subjectID) {
+export async function getClassID(term="26S", subjectID) {
   const urlFirstPageCheck = `https://sa.ucla.edu/ro/public/soc/Results?t=${term}&sBy=subject&subj=${encodeURIComponent(subjectID)}&catlg=&cls_no=&undefined=Go&btnIsInIndex=btn_inIndex`;
   const results = [];
   const headers = {

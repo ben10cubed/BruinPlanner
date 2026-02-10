@@ -1,5 +1,5 @@
 // Fetches subjects from UCLA SOC UI
-export async function fetchSubjectID(term = "26W") {
+export async function fetchSubjectID(term = "26S") {
   const timestamp = Date.now();
   const url = `https://sa.ucla.edu/ro/ClassSearch/Public/Search/GetSimpleSearchData?term_cd=${term}&ses_grp_cd=&search_type=subject&_=${timestamp}`;
 

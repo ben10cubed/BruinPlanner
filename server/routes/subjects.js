@@ -6,7 +6,7 @@ export default function subjectsRoute(db) {
   const router = express.Router();
 
   router.get("/", async (req, res) => {
-    const term = "26W";
+    const term = "26S";
 
     try {
       // Get subjects in DB

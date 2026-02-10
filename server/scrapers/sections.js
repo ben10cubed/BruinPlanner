@@ -373,11 +373,11 @@ function generateToken(subjectCode, courseID) {
 /*inputs
     subject_code: subject ID (e.g. "COM SCI") - retrieved from Ben's code
     course_ID: course number (e.g. "35L") - retrieved from Ben's code
-    term: e.g. "26W" - set manually
+    term: e.g. "26S" - set manually
     lecture_num: optional parameter; if it is entered, then it returns the discussion sections corresponding to that lecture. If not, then it just returns the lectures
 */
 
-async function fetchCourse(subject_code, course_ID, term="26W", lecture_num=null, seqNum=null) {
+async function fetchCourse(subject_code, course_ID, term="26S", lecture_num=null, seqNum=null) {
     const url_base = "https://sa.ucla.edu/ro/public/soc/Results/GetCourseSummary?";
 
     const Token = Buffer.from(getTokenStr(subject_code, course_ID), "utf8").toString("base64");
@@ -457,7 +457,7 @@ export async function getSectionInfo(subjectID, classID, className="") {
     classID = "19";
   }
 
-  const term = "26W";
+  const term = "26S";
 
   const courseData = await fetchCourse(subjectID, classID, term);
   const allClassData = getClassData(courseData, subjectID, tmp_fiat_ID);
