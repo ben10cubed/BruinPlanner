@@ -5,6 +5,7 @@ import ClassDetails from "../components/ClassDetails.jsx";
 import SubjectSearch from "../components/SubjectSearch.jsx";
 import ClassSearch from "../components/ClassSearch.jsx";
 import ChosenClasses from "../components/ChosenClasses.jsx";
+import Filters from "../components/Filters.jsx";
 import SavedSchedulesSidebar from "../components/SavedSchedulesSidebar.jsx";
 import SaveModal from "../components/SaveModal.jsx";
 
@@ -34,6 +35,7 @@ export default function MainPage({ userID, onLogout }) {
   /* -------------------------------------------
       Schedule filters / priorities
     ------------------------------------------- */
+    const [showFiltersModal, setShowFiltersModal] = useState(false);
     const [filters, setFilters] = useState([{ id: "none", value: "" }]);
 
   /* -------------------------------------------
@@ -393,9 +395,10 @@ export default function MainPage({ userID, onLogout }) {
             handlePrev={handlePrev}
             handleClear={handleClear}
             handleSave={handleSave}
+            onOpenFilters={() => setShowFiltersModal(true)}
             filters={filters}
             setFilters={setFilters}
-          />
+           />
         </div>
 
         <SavedSchedulesSidebar
@@ -405,6 +408,21 @@ export default function MainPage({ userID, onLogout }) {
           onDelete={handleDeleteSaved}
         />
       </div>
+
+      {/* Filters modal */}
+      {showFiltersModal && (
+        <div className="modal-overlay">
+          <div className="filter-modal-content">
+            <button className="close-modal-x" onClick={() => setShowFiltersModal(false)}>
+              ✕
+            </button>
+            <Filters priorities={filters} setPriorities={setFilters}/>
+            <button className="modal-done-btn" onClick={() => setShowFiltersModal(false)}>
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
 
       <SaveModal
         visible={showSaveModal}

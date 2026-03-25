@@ -278,6 +278,24 @@ h2, h3, h4 {
   background-color: #005fcc;
 }
 
+.preferences-btn {
+  background-color: #007aff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+  transform: translateY(-4px);
+  margin-left: auto;
+}
+
+.preferences-btn:hover {
+  background-color: #005fcc;
+}
+
 .chosen-classes-panel {
   width: 350px;
   height: 800px;
@@ -513,4 +531,109 @@ h2, h3, h4 {
 
 .filters-section {
   margin-bottom: 10px;
+}
+
+/* Darkens the background */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000; /* Higher than everything else */
+}
+
+/* The white box in the center */
+.filter-modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  position: relative;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.close-modal-x {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.modal-done-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.header-actions {
+  text-align: left; /* Explicitly forces them to the left */
+}
+
+.header-actions button {
+  margin-right: 12px; /* Adds space after each button */
+}
+
+.header-actions button:last-child {
+  margin-right: 0; /* Cleans up the extra space on the final button */
+}
+
+.active-filters-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0 5px;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f1f3f5;
+  border: 1px solid #ced4da;
+  color: #495057;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  user-select: none;
+}
+
+/* Hover effect for the whole tag */
+.filter-tag:hover {
+  background-color: #404040;
+  color: #ffffff;
+  border-color: #989898;
+  padding-right: 24px; /* Make room for the X */
+}
+
+/* The 'x' icon starts hidden */
+.remove-x {
+  position: absolute;
+  right: 8px;
+  opacity: 0;
+  font-weight: bold;
+  font-size: 10px;
+  transition: opacity 0.2s ease;
+}
+
+/* Show the 'x' on hover */
+.filter-tag:hover .remove-x {
+  opacity: 1;
 }

@@ -9,25 +9,64 @@ export default function ChosenClasses({
   handlePrev,
   handleClear,
   handleSave,
+  onOpenFilters,
   filters,
   setFilters
 }) {
+  
+  const removeFilter = (indexToRemove) => {
+    const updated = filters.filter((_, i) => i !== indexToRemove);
+    setFilters(updated);
+  };
+
+  // Helper to format the filter ID into a readable label
+  const getFilterLabel = (id) => {
+    const labels = {
+      "show_waitlist": "Show Waitlist",
+      "show_closed": "Show Closed",
+      "no_early_classes": "No Classes Before",
+      "no_late_classes": "No Classes After",
+      "no_classes_on_day": "No Classes on",
+      "compact": "Compact Schedule",
+      "min_days": "Minimize Days",
+    };
+    return labels[id] || id;
+  };
+
   return (
     <div className="chosen-classes-panel">
 
       <div className="chosen-header">
         <h3>Chosen Classes</h3>
-        <button className="generate-btn" onClick={handleGenerate}>
-          Generate
-        </button>
-        <button className="save-btn" onClick={handleSave}>
-          Save
-        </button>
       </div>
-      <div><section className="filters-section">
-          <Filters priorities={filters} setPriorities={setFilters} />
-        </section>
-      </div>
+      <div className="header-actions">
+          {/* Added a button to open the filter popup */}
+          <button className="preferences-btn" onClick={onOpenFilters}>
+            Filters
+          </button>
+          <button className="generate-btn" onClick={handleGenerate}>
+            Generate
+          </button>
+          <button className="save-btn" onClick={handleSave}>
+            Save
+          </button>
+        </div>
+        <div className="active-filters-summary">
+          {filters.map((f, i) => {
+            if (f.id === "none") return null;
+            return (
+              <span 
+                key={i} 
+                className="filter-tag" 
+                onClick={() => removeFilter(i)}
+                title="Click to remove"
+              >
+                {getFilterLabel(f.id)} {f.value}
+                <span className="remove-x">✕</span>
+              </span>
+            );
+          })}
+        </div>
 
       <div className="chosen-list">
         {chosenClasses.length === 0 && (
@@ -49,7 +88,7 @@ export default function ChosenClasses({
 
       <div className="chosen-fixed-footer">
         <button onClick={handlePrev}>Previous</button>
-        <button onClick={handleClear}>Clear</button>
+        <button className="clear-btn" onClick={handleClear}>Clear</button>
         <button onClick={handleNext}>Next</button>
       </div>
 
