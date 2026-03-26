@@ -351,7 +351,12 @@ export default function MainPage({ userID, onLogout }) {
   ------------------------------------------- */
   return (
     <div className="page-container">
-      <div className="top-row">
+      <nav className="navbar">
+        <span className="navbar-brand">BruinPlanner</span>
+        <button className="logout-btn" onClick={onLogout}>Logout</button>
+      </nav>
+
+      <div className="toolbar">
         <SubjectSearch
           subjectQuery={subjectQuery}
           setSubjectQuery={setSubjectQuery}
@@ -362,7 +367,6 @@ export default function MainPage({ userID, onLogout }) {
           isSelecting={isSelecting}
           setIsSelecting={setIsSelecting}
         />
-
         <ClassSearch
           classQuery={classQuery}
           setClassQuery={setClassQuery}
@@ -371,10 +375,6 @@ export default function MainPage({ userID, onLogout }) {
           classFocused={classFocused}
           setClassFocused={setClassFocused}
         />
-
-        <button className="logout-btn" onClick={onLogout}>
-          Logout
-        </button>
       </div>
 
       <div className="bottom-row">
