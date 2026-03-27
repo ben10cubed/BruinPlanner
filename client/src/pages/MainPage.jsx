@@ -37,6 +37,7 @@ export default function MainPage({ userID, onLogout }) {
     ------------------------------------------- */
     const [showFiltersModal, setShowFiltersModal] = useState(false);
     const [filters, setFilters] = useState([{ id: "none", value: "" }]);
+    const [settings, setSettings] = useState({showWaitlist: false, showClosed: false});
 
   /* -------------------------------------------
      Schedules (generated via backend)
@@ -207,7 +208,7 @@ export default function MainPage({ userID, onLogout }) {
       return;
     }
 
-    const result = await generate(chosenClasses);
+    const result = await generate(chosenClasses, filters, settings);
 
     if (result.error) {
       alert("Error generating schedules: " + result.error);
@@ -398,6 +399,8 @@ export default function MainPage({ userID, onLogout }) {
             onOpenFilters={() => setShowFiltersModal(true)}
             filters={filters}
             setFilters={setFilters}
+            settings={settings}
+            setSettings={setSettings}
            />
         </div>
 
@@ -416,7 +419,7 @@ export default function MainPage({ userID, onLogout }) {
             <button className="close-modal-x" onClick={() => setShowFiltersModal(false)}>
               ✕
             </button>
-            <Filters priorities={filters} setPriorities={setFilters}/>
+            <Filters priorities={filters} setPriorities={setFilters} settings={settings} setSettings={setSettings}/>
             <button className="modal-done-btn" onClick={() => setShowFiltersModal(false)}>
               Apply
             </button>

@@ -11,7 +11,9 @@ export default function ChosenClasses({
   handleSave,
   onOpenFilters,
   filters,
-  setFilters
+  setFilters,
+  settings,
+  setSettings
 }) {
   
   const removeFilter = (indexToRemove) => {
@@ -22,8 +24,6 @@ export default function ChosenClasses({
   // Helper to format the filter ID into a readable label
   const getFilterLabel = (id) => {
     const labels = {
-      "show_waitlist": "Show Waitlist",
-      "show_closed": "Show Closed",
       "no_early_classes": "No Classes Before",
       "no_late_classes": "No Classes After",
       "no_classes_on_day": "No Classes on",
@@ -40,7 +40,6 @@ export default function ChosenClasses({
         <h3>Chosen Classes</h3>
       </div>
       <div className="header-actions">
-          {/* Added a button to open the filter popup */}
           <button className="preferences-btn" onClick={onOpenFilters}>
             Filters
           </button>
@@ -52,6 +51,17 @@ export default function ChosenClasses({
           </button>
         </div>
         <div className="active-filters-summary">
+          {settings.showWaitlist && (
+            <span className="filter-tag global" onClick={() => setSettings({...settings, showWaitlist: false})}>
+              Show Waitlist Classes <span className="remove-x">✕</span>
+            </span>
+          )}
+          {settings.showClosed && (
+            <span className="filter-tag global" onClick={() => setSettings({...settings, showClosed: false})}>
+              Show Closed Classes <span className="remove-x">✕</span>
+            </span>
+          )}
+          
           {filters.map((f, i) => {
             if (f.id === "none") return null;
             return (

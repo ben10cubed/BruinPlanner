@@ -3,8 +3,6 @@ import "../mainPageCss/Filters.css";
 
 const FILTER_OPTIONS = [
   { id: "none", label: "Select a preference..." },
-  { id: "show_waitlist", label: "Show Waitlist Classes" },
-  { id: "show_closed", label: "Show Closed Classes" },
   { id: "no_early_classes", label: "No Classes Before" },
   { id: "no_late_classes", label: "No Classes After" },
   { id: "no_classes_on_day", label: "No Classes on" },
@@ -12,11 +10,21 @@ const FILTER_OPTIONS = [
   { id: "min_days", label: "Minimize Days" },
 ];
 
+const UNIQUE_FILTER_IDS = [
+  "no_early_classes",
+  "no_late_classes",
+  "compact",
+  "min_days"
+];
+
 const TIMES = ["8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm"];
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-// Added = [] as a safeguard to prevent "cannot read length of undefined"
-export default function Filters({ priorities = [], setPriorities }) {
+export default function Filters({ priorities = [], setPriorities, settings, setSettings}) {
+
+  const toggleSetting = (key) => {
+    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  };
   
   const addFilter = () => {
     setPriorities([...priorities, { id: "none", value: "" }]);
@@ -36,7 +44,11 @@ export default function Filters({ priorities = [], setPriorities }) {
       newPriorities[index].id = newValue;
       if (newValue === "no_early_classes") newPriorities[index].value = "10am";
       else if (newValue === "no_late_classes") newPriorities[index].value = "2pm";
-      else if (newValue === "no_classes_on_day") newPriorities[index].value = "Friday";
+      else if (newValue === "no_classes_on_day") {
+        const usedDays = priorities.map(p => p.id === "no_classes_on_day" ? p.value : null);
+        const lastFreeDay = [...DAYS].reverse().find(d => !usedDays.includes(d)) || "Friday";
+        newPriorities[index].value = lastFreeDay;
+      }
       else newPriorities[index].value = "";
     } else {
       newPriorities[index][field] = newValue;
@@ -46,7 +58,6 @@ export default function Filters({ priorities = [], setPriorities }) {
 
   return (
     <div className="filters-container">
-      {/* Header with Title and Clear Button */}
       <div className="filters-header">
         <h3 className="filters-title">Schedule Priorities</h3>
         {priorities.length > 0 && (
@@ -55,47 +66,92 @@ export default function Filters({ priorities = [], setPriorities }) {
           </button>
         )}
       </div>
+
+      {/* Toggles*/}
+      <div className="global-settings-box">
+        <label className="settings-row">
+          <input 
+            type="checkbox" 
+            checked={settings.showWaitlist} 
+            onChange={() => toggleSetting("showWaitlist")} 
+          />
+          Show Waitlist Classes
+        </label>
+        <label className="settings-row">
+          <input 
+            type="checkbox" 
+            checked={settings.showClosed} 
+            onChange={() => toggleSetting("showClosed")} 
+          />
+          Show Closed Classes
+        </label>
+      </div>
+
+      <hr />
       
       <div className="filters-list">
-        {priorities.map((item, i) => (
-          <div key={i} className="priority-row">
-            <span className="priority-number">{i + 1}.</span>
+        {priorities.map((item, i) => {
+          const usedUniqueIds = priorities
+            .filter((_, idx) => idx !== i)
+            .map(p => p.id)
+            .filter(id => id !== "no_classes_on_day" && id !== "none");
+          const daysTakenByOthers = priorities
+            .filter((_, idx) => idx !== i)
+            .filter(p => p.id === "no_classes_on_day")
+            .map(p => p.value);
+          const allDaysBlockedByOthers = DAYS.every(d => daysTakenByOthers.includes(d));
+          const availableOptions = FILTER_OPTIONS.filter(opt => {
+            if (opt.id === "none") return true;
+            if (opt.id === "no_classes_on_day") {
+              return item.id === "no_classes_on_day" || !allDaysBlockedByOthers;
+            }
+            return !usedUniqueIds.includes(opt.id);
+          });
 
-            <select
-              className="priority-select-main"
-              value={item.id}
-              onChange={(e) => updateFilter(i, "id", e.target.value)}
-            >
-              {FILTER_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>{opt.label}</option>
-              ))}
-            </select>
+          return (
+            <div key={i} className="priority-row">
+              <span className="priority-number">{i + 1}.</span>
 
-            {(item.id === "no_early_classes" || item.id === "no_late_classes") && (
-              <select 
-                className="priority-select-param"
-                value={item.value}
-                onChange={(e) => updateFilter(i, "value", e.target.value)}
+              <select
+                className="priority-select-main"
+                value={item.id}
+                onChange={(e) => updateFilter(i, "id", e.target.value)}
               >
-                {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+                {availableOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>{opt.label}</option>
+                ))}
               </select>
-            )}
 
-            {item.id === "no_classes_on_day" && (
-              <select 
-                className="priority-select-param"
-                value={item.value}
-                onChange={(e) => updateFilter(i, "value", e.target.value)}
-              >
-                {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-            )}
+              {(item.id === "no_early_classes" || item.id === "no_late_classes") && (
+                <select 
+                  className="priority-select-param"
+                  value={item.value}
+                  onChange={(e) => updateFilter(i, "value", e.target.value)}
+                >
+                  {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              )}
 
-            <button className="remove-filter-btn" onClick={() => removeFilter(i)}>
-              ✕
-            </button>
-          </div>
-        ))}
+              {item.id === "no_classes_on_day" && (
+                <select 
+                  className="priority-select-param"
+                  value={item.value}
+                  onChange={(e) => updateFilter(i, "value", e.target.value)}
+                >
+                  {DAYS.map(d => (
+                    <option key={d} value={d} disabled={daysTakenByOthers.includes(d)}>
+                      {d} {daysTakenByOthers.includes(d) ? "(Already Selected)" : ""}
+                      </option>
+                    ))}
+                </select>
+              )}
+
+              <button className="remove-filter-btn" onClick={() => removeFilter(i)}>
+                ✕
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       <button className="add-filter-btn" onClick={addFilter}>
