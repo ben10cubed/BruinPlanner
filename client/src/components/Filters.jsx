@@ -25,7 +25,7 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
   const toggleSetting = (key) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
-  
+
   const addFilter = () => {
     setPriorities([...priorities, { id: "none", value: "" }]);
   };
@@ -52,15 +52,9 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
       if (newValue === "no_early_classes") newPriorities[index].value = "10am";
       else if (newValue === "no_late_classes") newPriorities[index].value = "2pm";
       else if (newValue === "no_classes_on_day") {
-<<<<<<< Updated upstream
-        const usedDays = priorities.map(p => p.id === "no_classes_on_day" ? p.value : null);
-        const lastFreeDay = [...DAYS].reverse().find(d => !usedDays.includes(d)) || "Friday";
-        newPriorities[index].value = lastFreeDay;
-=======
         // Default to first day not already in use
         const usedDays = priorities.filter((p, i) => i !== index && p.id === "no_classes_on_day").map(p => p.value);
         newPriorities[index].value = DAYS.find(d => !usedDays.includes(d)) ?? "Monday";
->>>>>>> Stashed changes
       }
       else newPriorities[index].value = "";
     } else if (field === "value" && newPriorities[index].id === "no_classes_on_day") {
@@ -85,29 +79,28 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
         )}
       </div>
 
-<<<<<<< Updated upstream
       {/* Toggles*/}
       <div className="global-settings-box">
         <label className="settings-row">
-          <input 
-            type="checkbox" 
-            checked={settings.showWaitlist} 
-            onChange={() => toggleSetting("showWaitlist")} 
+          <input
+            type="checkbox"
+            checked={settings.showWaitlist}
+            onChange={() => toggleSetting("showWaitlist")}
           />
           Show Waitlist Classes
         </label>
         <label className="settings-row">
-          <input 
-            type="checkbox" 
-            checked={settings.showClosed} 
-            onChange={() => toggleSetting("showClosed")} 
+          <input
+            type="checkbox"
+            checked={settings.showClosed}
+            onChange={() => toggleSetting("showClosed")}
           />
           Show Closed Classes
         </label>
       </div>
 
       <hr />
-      
+
       <div className="filters-list">
         {priorities.map((item, i) => {
           const usedUniqueIds = priorities
@@ -126,40 +119,6 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
             }
             return !usedUniqueIds.includes(opt.id);
           });
-=======
-      <div className="filters-list">
-        {priorities.map((item, i) => {
-          const usedIds = priorities.filter((p, j) => j !== i && p.id !== "no_classes_on_day").map(p => p.id);
-          const usedDays = priorities.filter((p, j) => j !== i && p.id === "no_classes_on_day").map(p => p.value);
-          return (
-          <div key={i} className="priority-row">
-            <span className="priority-number">{i + 1}.</span>
-
-            <select
-              className="priority-select-main"
-              value={item.id}
-              onChange={(e) => updateFilter(i, "id", e.target.value)}
-            >
-              {FILTER_OPTIONS.map((opt) => {
-                const isUsed = opt.id !== "none" && opt.id !== "no_classes_on_day" && usedIds.includes(opt.id);
-                return (
-                  <option key={opt.id} value={opt.id} disabled={isUsed}>
-                    {opt.label}{isUsed ? " (already added)" : ""}
-                  </option>
-                );
-              })}
-            </select>
-
-            {(item.id === "no_early_classes" || item.id === "no_late_classes") && (
-              <select 
-                className="priority-select-param"
-                value={item.value}
-                onChange={(e) => updateFilter(i, "value", e.target.value)}
-              >
-                {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            )}
->>>>>>> Stashed changes
 
           return (
             <div key={i} className="priority-row">
@@ -170,21 +129,13 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
                 value={item.id}
                 onChange={(e) => updateFilter(i, "id", e.target.value)}
               >
-<<<<<<< Updated upstream
                 {availableOptions.map((opt) => (
                   <option key={opt.id} value={opt.id}>{opt.label}</option>
-=======
-                {DAYS.map(d => (
-                  <option key={d} value={d} disabled={usedDays.includes(d)}>
-                    {d}{usedDays.includes(d) ? " (already added)" : ""}
-                  </option>
->>>>>>> Stashed changes
                 ))}
               </select>
 
-<<<<<<< Updated upstream
               {(item.id === "no_early_classes" || item.id === "no_late_classes") && (
-                <select 
+                <select
                   className="priority-select-param"
                   value={item.value}
                   onChange={(e) => updateFilter(i, "value", e.target.value)}
@@ -194,7 +145,7 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
               )}
 
               {item.id === "no_classes_on_day" && (
-                <select 
+                <select
                   className="priority-select-param"
                   value={item.value}
                   onChange={(e) => updateFilter(i, "value", e.target.value)}
@@ -202,8 +153,8 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
                   {DAYS.map(d => (
                     <option key={d} value={d} disabled={daysTakenByOthers.includes(d)}>
                       {d} {daysTakenByOthers.includes(d) ? "(Already Selected)" : ""}
-                      </option>
-                    ))}
+                    </option>
+                  ))}
                 </select>
               )}
 
@@ -211,12 +162,6 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
                 ✕
               </button>
             </div>
-=======
-            <button className="remove-filter-btn" onClick={() => removeFilter(i)}>
-              ✕
-            </button>
-          </div>
->>>>>>> Stashed changes
           );
         })}
       </div>
