@@ -8,7 +8,7 @@ export default function classesRoute(db) {
 
   router.get("/", async (req, res) => {
     const subject = req.query.subject;
-    const term = "26S";
+    const term = process.env.UCLA_TERM;
 
     if (!subject)
       return res.status(400).json({ error: "Missing 'subject' parameter." });

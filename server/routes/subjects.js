@@ -6,7 +6,7 @@ export default function subjectsRoute(db) {
   const router = express.Router();
 
   router.get("/", async (req, res) => {
-    const term = "26S";
+    const term = process.env.UCLA_TERM;
 
     try {
       const stored = await getSubjects(db);

@@ -18,7 +18,7 @@ export default function schedulesRoute(db) {
         });
       }
 
-      const term = "26S";
+      const term = process.env.UCLA_TERM;
 
       for (const entry of list) {
         const { subjectID, classID } = entry;
@@ -49,7 +49,7 @@ export default function schedulesRoute(db) {
 
       for (const { subjectID, classID } of list) {
         const classNameRows = await getClassName(db, subjectID, classID);
-        const scraped = await getSectionInfo(subjectID, classID, classNameRows[0].className);
+        const scraped = await getSectionInfo(subjectID, classID, term, classNameRows[0].className);
         for (const section of scraped) {
           console.log(section);
           await upsertSectionEntry(db, section);

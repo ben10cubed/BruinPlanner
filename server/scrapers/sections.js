@@ -447,17 +447,15 @@ async function fetchCourse(subject_code, course_ID, term="26S", lecture_num=null
 }
 
 //className is only useful for FIAT LX 19 special case classes
-export async function getSectionInfo(subjectID, classID, className="") {
+export async function getSectionInfo(subjectID, classID, term, className="") {
   if (!subjectID || !classID) {
     return [];
-  } 
+  }
 
   const tmp_fiat_ID = classID;
   if (subjectID === "FIAT LX" && classID.includes("19")) {
     classID = "19";
   }
-
-  const term = "26S";
 
   const courseData = await fetchCourse(subjectID, classID, term);
   const allClassData = getClassData(courseData, subjectID, tmp_fiat_ID);
