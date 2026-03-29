@@ -13,10 +13,7 @@ import {
 export default function usersRoute(db) {
   const router = express.Router();
 
-  const KEY = Buffer.from(
-    "5wYAm0tfNh/aheCbV6KeqzEGTY2DZ2tmU366vosugek=",
-    "base64"
-  );
+  const KEY = Buffer.from(process.env.SCHEDULE_ENCRYPTION_KEY, "base64");
   const ALGO = "aes-256-gcm";
 
   function encrypt(text) {
