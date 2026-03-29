@@ -18,7 +18,6 @@ export default function schedulesRoute(db) {
         });
       }
 
-      //I don't think I use it, but just for clarification
       const term = "26S";
 
       for (const entry of list) {
@@ -31,8 +30,7 @@ export default function schedulesRoute(db) {
           });
         }
 
-        //Sanity check that inputs make sense
-        if (!subjectExists(db, subjectID)) {
+        if (!(await subjectExists(db, subjectID))) {
           console.log("Invalid subject:", subjectID);
           return res.status(400).json({
             error: `Subject '${subjectID}' does not exist.`,
@@ -40,9 +38,9 @@ export default function schedulesRoute(db) {
           });
         }
 
-        if(!classExists(db, subjectID, classID)) {
-            console.log("Invalid subject:", subjectID);
-            return res.status(400).json({
+        if (!(await classExists(db, subjectID, classID))) {
+          console.log("Invalid class:", classID);
+          return res.status(400).json({
             error: `Class '${classID}' does not exist.`,
             invalidClass: classID,
           });
@@ -50,11 +48,10 @@ export default function schedulesRoute(db) {
       }
 
       for (const { subjectID, classID } of list) {
-        let retClassName = getClassName(db, subjectID, classID);
-        const scraped = await getSectionInfo(subjectID, classID, retClassName[0].className);
+        const classNameRows = await getClassName(db, subjectID, classID);
+        const scraped = await getSectionInfo(subjectID, classID, classNameRows[0].className);
         for (const section of scraped) {
           console.log(section);
-          //Either update or insert section
           await upsertSectionEntry(db, section);
         }
       }

@@ -9,26 +9,20 @@ export default function subjectsRoute(db) {
     const term = "26S";
 
     try {
-      // Get subjects in DB
-      const stored = getSubjects(db);
+      const stored = await getSubjects(db);
 
-      // If empty → scrape UCLA → insert → return
       if (stored.length === 0) {
         console.log("DB empty → scraping UCLA...");
 
         const scraped = await fetchSubjectID(term);
 
-        scraped.forEach((s) =>
-          createSubjectEntry(db, [
-            s.subjectID.trim(),
-            s.subjectName.trim(),
-          ])
-        );
+        for (const s of scraped) {
+          await createSubjectEntry(db, [s.subjectID.trim(), s.subjectName.trim()]);
+        }
 
         return res.json(scraped);
-      } //Can update here, if length != 0 based on current time and last update time.
+      }
 
-      // Otherwise return cached subjects
       console.log("Returning cached subjects (DB)");
       return res.json(stored);
 

@@ -1,9 +1,7 @@
-export function runAndSave(db, sql, params = []) {
-  db.run(sql, params);
-  db.saveToDisk();
+export async function runAndSave(db, sql, params = []) {
+  await db.execute({ sql, args: params });
 }
 
-export function execAndSave(db, sql) {
-  db.exec(sql);
-  db.saveToDisk();
+export async function execAndSave(db, sql) {
+  await db.execute(sql);
 }

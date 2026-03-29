@@ -1,7 +1,7 @@
 import express from "express";
 import { getClasses, createClassEntry } from "../db/class.js";
 import { getClassID } from "../scrapers/classes.js";
-import { subjectExists  } from "../db/subject.js";
+import { subjectExists } from "../db/subject.js";
 
 export default function classesRoute(db) {
   const router = express.Router();
@@ -14,36 +14,27 @@ export default function classesRoute(db) {
       return res.status(400).json({ error: "Missing 'subject' parameter." });
 
     try {
-      //Validate subject exists in the DB
-      if (!subjectExists(db, subject)) {
+      if (!(await subjectExists(db, subject))) {
         return res.status(400).json({
-          error: `Subject '${subject}' does not exist. Either fetch subjects, or invalid ID`
+          error: `Subject '${subject}' does not exist. Either fetch subjects, or invalid ID`,
         });
       }
 
-      //Check if classes for subject already cached
-      const stored = getClasses(db, subject);
+      const stored = await getClasses(db, subject);
 
       if (stored.length === 0) {
         console.log(`No cached classes → scraping UCLA for ${subject}`);
 
         const scraped = await getClassID(term, subject);
 
-        // Insert scraped classes
-        // Fix bug of not returning subject on first run.
-        scraped.forEach((c) => {
+        for (const c of scraped) {
           c.subjectID = subject;
-            createClassEntry(db, [
-                subject,
-                c.classID,
-                c.className
-            ]);
-       });
+          await createClassEntry(db, [subject, c.classID, c.className]);
+        }
 
         return res.json(scraped);
-      } //To update, we can add an else statement here and check time.
+      }
 
-      //Return cached
       console.log(`Returning cached classes for ${subject}`);
       return res.json(stored);
 

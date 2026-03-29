@@ -1,37 +1,34 @@
 import { getTable } from "../utils/getTable.js";
-import { runAndSave } from "../utils/dbUtils.js";
 
 /* ============================================================
    CREATE OR UPDATE SECTION ENTRY
    sectionData must be: [subjectID, classID, enroll, sectionID, status, waitlist, info, day, time, location, units, instructor]
    ============================================================ */
 export async function createSectionEntry(db, sectionData) {
-  const sql = `
-    INSERT INTO sectionData (
-      subjectID, classID, enroll, sectionID, status,
-      waitlist, info, day, time, location, units, instructor
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(subjectID, classID, sectionID)
-    DO UPDATE SET
-      enroll     = excluded.enroll,
-      status     = excluded.status,
-      waitlist   = excluded.waitlist,
-      info       = excluded.info,
-      day        = excluded.day,
-      time       = excluded.time,
-      location   = excluded.location,
-      units      = excluded.units,
-      instructor = excluded.instructor;
-  `;
-
-  await runAndSave(db, sql, sectionData);
+  await db.execute({
+    sql: `INSERT INTO sectionData (
+            subjectID, classID, enroll, sectionID, status,
+            waitlist, info, day, time, location, units, instructor
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(subjectID, classID, sectionID)
+          DO UPDATE SET
+            enroll     = excluded.enroll,
+            status     = excluded.status,
+            waitlist   = excluded.waitlist,
+            info       = excluded.info,
+            day        = excluded.day,
+            time       = excluded.time,
+            location   = excluded.location,
+            units      = excluded.units,
+            instructor = excluded.instructor`,
+    args: sectionData,
+  });
 }
 
 
 /* ============================================================
    UPSERT SECTION ENTRY
-   (simple alias to same logic)
    ============================================================ */
 export async function upsertSectionEntry(db, sectionData) {
   await createSectionEntry(db, sectionData);
@@ -41,86 +38,66 @@ export async function upsertSectionEntry(db, sectionData) {
 /* ============================================================
    GET ALL sectionIDs for a class
    ============================================================ */
-export function getSections(db, subjectID, classID) {
-  const stmt = db.prepare(`
-    SELECT sectionID
-    FROM sectionData
-    WHERE subjectID = ? AND classID = ?
-    ORDER BY sectionID;
-  `);
-
-  stmt.bind([subjectID, classID]);
-  return getTable(stmt);
-}
-
-
-/* ============================================================
-   Helper: Fetch exactly one row
-   ============================================================ */
-function getOneRow(stmt, params = []) {
-  stmt.bind(params);
-  const rows = getTable(stmt);
-  stmt.free();
-  return rows.length > 0 ? rows[0] : null;
+export async function getSections(db, subjectID, classID) {
+  const result = await db.execute({
+    sql: `SELECT sectionID
+          FROM sectionData
+          WHERE subjectID = ? AND classID = ?
+          ORDER BY sectionID`,
+    args: [subjectID, classID],
+  });
+  return getTable(result);
 }
 
 
 /* ============================================================
    GET FULL SECTION ROW
-   Returns: a plain object representing one DB row
+   Returns a plain object or null
    ============================================================ */
-export function getSectionAll(db, subjectID, classID, sectionID, callback) {
-  try {
-    const stmt = db.prepare(`
-      SELECT *
-      FROM sectionData
-      WHERE subjectID = ? AND classID = ? AND sectionID = ?
-      LIMIT 1;
-    `);
-
-    const row = getOneRow(stmt, [subjectID, classID, sectionID]);
-
-    return callback(null, row); // row or null
-  } catch (err) {
-    console.error("DB error in getSectionAll:", err);
-    return callback(err, null);
-  }
+export async function getSectionAll(db, subjectID, classID, sectionID) {
+  const result = await db.execute({
+    sql: `SELECT *
+          FROM sectionData
+          WHERE subjectID = ? AND classID = ? AND sectionID = ?
+          LIMIT 1`,
+    args: [subjectID, classID, sectionID],
+  });
+  const rows = getTable(result);
+  return rows.length > 0 ? rows[0] : null;
 }
 
 
 /* ============================================================
    DOES SECTION EXIST?
    ============================================================ */
-export function sectionExists(db, subjectID, classID, sectionID) {
-  const stmt = db.prepare(`
-    SELECT 1
-    FROM sectionData
-    WHERE subjectID = ? AND classID = ? AND sectionID = ?
-    LIMIT 1;
-  `);
-
-  stmt.bind([subjectID, classID, sectionID]);
-  const exists = stmt.step();   // true if row found
-  stmt.free();
-  return exists;
+export async function sectionExists(db, subjectID, classID, sectionID) {
+  const result = await db.execute({
+    sql: `SELECT 1
+          FROM sectionData
+          WHERE subjectID = ? AND classID = ? AND sectionID = ?
+          LIMIT 1`,
+    args: [subjectID, classID, sectionID],
+  });
+  return result.rows.length > 0;
 }
 
 
 /* ============================================================
    GET AVAILABILITY CODE (O, C, W, etc.)
    ============================================================ */
-export function getSectionAvail(db, subjectID, classID, sectionID) {
-  const stmt = db.prepare(`
-    SELECT status
-    FROM sectionData
-    WHERE subjectID = ? AND classID = ? AND sectionID = ?
-    LIMIT 1;
-  `);
-
-  const row = getOneRow(stmt, [subjectID, classID, sectionID]);
+export async function getSectionAvail(db, subjectID, classID, sectionID) {
+  const result = await db.execute({
+    sql: `SELECT status
+          FROM sectionData
+          WHERE subjectID = ? AND classID = ? AND sectionID = ?
+          LIMIT 1`,
+    args: [subjectID, classID, sectionID],
+  });
+  const rows = getTable(result);
+  const row = rows.length > 0 ? rows[0] : null;
   if (!row || !row.status) return "";
 
-  const primary = row.status.split("|")[0]; // e.g. "Open|SomeNote"
+  const primary = row.status.split("|")[0];
 
   switch (primary) {
     case "Open":       return "O";
@@ -137,30 +114,30 @@ export function getSectionAvail(db, subjectID, classID, sectionID) {
 /* ============================================================
    GET DAY STRING
    ============================================================ */
-export function getSectionDay(db, subjectID, classID, sectionID) {
-  const stmt = db.prepare(`
-    SELECT day
-    FROM sectionData
-    WHERE subjectID = ? AND classID = ? AND sectionID = ?
-    LIMIT 1;
-  `);
-
-  const row = getOneRow(stmt, [subjectID, classID, sectionID]);
-  return row ? row.day : null;
+export async function getSectionDay(db, subjectID, classID, sectionID) {
+  const result = await db.execute({
+    sql: `SELECT day
+          FROM sectionData
+          WHERE subjectID = ? AND classID = ? AND sectionID = ?
+          LIMIT 1`,
+    args: [subjectID, classID, sectionID],
+  });
+  const rows = getTable(result);
+  return rows.length > 0 ? rows[0].day : null;
 }
 
 
 /* ============================================================
    GET TIME STRING
    ============================================================ */
-export function getSectionTime(db, subjectID, classID, sectionID) {
-  const stmt = db.prepare(`
-    SELECT time
-    FROM sectionData
-    WHERE subjectID = ? AND classID = ? AND sectionID = ?
-    LIMIT 1;
-  `);
-
-  const row = getOneRow(stmt, [subjectID, classID, sectionID]);
-  return row ? row.time : null;
+export async function getSectionTime(db, subjectID, classID, sectionID) {
+  const result = await db.execute({
+    sql: `SELECT time
+          FROM sectionData
+          WHERE subjectID = ? AND classID = ? AND sectionID = ?
+          LIMIT 1`,
+    args: [subjectID, classID, sectionID],
+  });
+  const rows = getTable(result);
+  return rows.length > 0 ? rows[0].time : null;
 }
