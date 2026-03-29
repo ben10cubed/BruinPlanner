@@ -6,8 +6,8 @@ export default function useScheduleGenerator() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Generate new schedules from backend
-  async function generate(chosenClasses) {
-    const { ok, data } = await generateSchedules(chosenClasses);
+  async function generate(chosenClasses, filters = [], settings = { showWaitlist: false, showClosed: false }) {
+    const { ok, data } = await generateSchedules(chosenClasses, filters, settings);
 
     if (!ok) {
       return { error: data.error || "Server error" };

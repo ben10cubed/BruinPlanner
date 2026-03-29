@@ -10,19 +10,81 @@ const strToDay = {
     "U": 6
 }
 
-async function filterAvailable(db, subjectID, classID, courseData) { //returns new courseData array with only available lectures and discussions
-    const newCourseData = []
-    for(var data of courseData) {
-        let sectionID = data['sectionID'];
-        let avail = await getSectionAvail(db, subjectID, classID, sectionID);
-        //console.log(avail);
-        if(avail == 'O' || avail == 'W' || avail == 'C') {
-            //console.log(data);
+const dayNameToCode = {
+    "Monday":    "M",
+    "Tuesday":   "T",
+    "Wednesday": "W",
+    "Thursday":  "R",
+    "Friday":    "F",
+};
+
+function parseFilterTime(str) {
+    const match = str.match(/^(\d+)(am|pm)$/);
+    if (!match) return null;
+    let hour = parseInt(match[1]);
+    const period = match[2];
+    if (period === "pm" && hour !== 12) hour += 12;
+    if (period === "am" && hour === 12) hour = 0;
+    return hour * 100;
+}
+
+async function filterAvailable(db, subjectID, classID, courseData, settings = { showWaitlist: false, showClosed: false }) {
+    const allowed = new Set(["O"]);
+    if (settings.showWaitlist) allowed.add("W");
+    if (settings.showClosed) allowed.add("C");
+
+    const newCourseData = [];
+    for (const data of courseData) {
+        const avail = await getSectionAvail(db, subjectID, classID, data["sectionID"]);
+        if (allowed.has(avail)) {
             newCourseData.push(data);
         }
     }
-    //console.log(newCourseData);
     return newCourseData;
+}
+
+async function filterByPreferences(db, subjectID, classID, courseData, filters) {
+    if (!filters || filters.length === 0) return courseData;
+
+    const noEarlyFilter = filters.find(f => f.id === "no_early_classes");
+    const noLateFilter  = filters.find(f => f.id === "no_late_classes");
+    const excludedDays  = filters
+        .filter(f => f.id === "no_classes_on_day")
+        .map(f => dayNameToCode[f.value])
+        .filter(Boolean);
+
+    const minTime = noEarlyFilter ? parseFilterTime(noEarlyFilter.value) : null;
+    const maxTime = noLateFilter  ? parseFilterTime(noLateFilter.value)  : null;
+
+    if (minTime === null && maxTime === null && excludedDays.length === 0) return courseData;
+
+    const filtered = [];
+    for (const data of courseData) {
+        const sectionID = data["sectionID"];
+        const daysStr = await getSectionDay(db, subjectID, classID, sectionID);
+        const timesStr = await getSectionTime(db, subjectID, classID, sectionID);
+
+        if (isNotScheduled(daysStr) || isNotScheduled(timesStr)) {
+            filtered.push(data);
+            continue;
+        }
+
+        const days  = getDays(daysStr);
+        const times = getTimes(timesStr);
+        let passes = true;
+
+        for (let i = 0; i < days.length; i++) {
+            const day = days[i];
+            const [start, end] = times[i] ?? [null, null];
+
+            if (excludedDays.includes(day)) { passes = false; break; }
+            if (minTime !== null && start !== null && start < minTime) { passes = false; break; }
+            if (maxTime !== null && end   !== null && end   > maxTime) { passes = false; break; }
+        }
+
+        if (passes) filtered.push(data);
+    }
+    return filtered;
 }
 
 function parseCourseID(courseID) {
@@ -209,7 +271,7 @@ export function sameSectionGroup(id1, id2) {
  * @returns {Promise<Array>} Array of plain value Maps, where each Map is a possible schedule. Key = subjectID + '+' + classID, and value = [lectureID, discussionID]
  */
 
-export async function getSchedules(db, courses, term="26W") {
+export async function getSchedules(db, courses, term="26W", filters=[], settings={ showWaitlist: false, showClosed: false }) {
     const courseMap = {};
 
     for(let course of courses) {
@@ -219,18 +281,19 @@ export async function getSchedules(db, courses, term="26W") {
         let courseMapID = subjectID+'+'+classID;
         courseMap[courseMapID] = [];
         const courseData = await getSections(db, subjectID, classID);
-        const availData = await filterAvailable(db, subjectID, classID, courseData);
+        const availData = await filterAvailable(db, subjectID, classID, courseData, settings);
+        const prefData = await filterByPreferences(db, subjectID, classID, availData, filters);
 
         //Find all the root sections
         //Could be Sem Lab Lec, so long as it doesn't end in a letter
-        for(let section of availData) {
+        for(let section of prefData) {
             let sectionID = cutSectionID(section['sectionID']);
             if(isLecture(sectionID)) {
                 courseMap[courseMapID].push([section['sectionID'], []]);
             }
         }
         //Attach all the subsections to their root sections
-        for(let subsection of availData) {
+        for(let subsection of prefData) {
             let subsectionID = cutSectionID(subsection['sectionID']);
             if(!isLecture(subsectionID)) {
                 for(let i = 0; i < courseMap[courseMapID].length; i++) {

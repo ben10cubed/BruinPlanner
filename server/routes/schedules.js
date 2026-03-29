@@ -12,6 +12,8 @@ export default function schedulesRoute(db) {
   router.post("/", async (req, res) => {
     try {
       const list = req.body.classes;
+      const filters = req.body.filters ?? [];
+      const settings = req.body.settings ?? { showWaitlist: false, showClosed: false };
       if (!Array.isArray(list)) {
         return res.status(400).json({
           error: "Expected request body of shape { classes: [...] }",
@@ -57,7 +59,7 @@ export default function schedulesRoute(db) {
       }
 
       console.log("Finished");
-      return res.json(await getSchedules(db, list, term));
+      return res.json(await getSchedules(db, list, term, filters, settings));
 
     } catch (err) {
       console.error("Error in POST /api/schedules:", err);
