@@ -26,7 +26,10 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const MAX_FILTERS = 5;
+
   const addFilter = () => {
+    if (priorities.length >= MAX_FILTERS) return;
     setPriorities([...priorities, { id: "none", value: "" }]);
   };
 
@@ -166,8 +169,8 @@ export default function Filters({ priorities = [], setPriorities, settings, setS
         })}
       </div>
 
-      <button className="add-filter-btn" onClick={addFilter}>
-        + Add Another Priority
+      <button className="add-filter-btn" onClick={addFilter} disabled={priorities.length >= MAX_FILTERS}>
+        {priorities.length >= MAX_FILTERS ? `Max ${MAX_FILTERS} priorities reached` : "+ Add Another Priority"}
       </button>
     </div>
   );

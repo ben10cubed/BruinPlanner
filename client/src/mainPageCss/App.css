@@ -107,11 +107,12 @@ h2, h3, h4 {
   background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 5px 8px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 .generate-btn:hover,
 .preferences-btn:hover {
@@ -122,12 +123,12 @@ h2, h3, h4 {
   background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 5px 8px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   transition: background 0.2s;
-  margin-left: auto;
+  white-space: nowrap;
 }
 .save-btn:hover {
   background-color: var(--color-primary-dark);
@@ -490,11 +491,11 @@ h2, h3, h4 {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
+  width: 100%;
+  gap: 6px;
 }
 .header-actions button {
-  margin-right: 12px;
-}
-.header-actions button:last-child {
+  flex: 1;
   margin-right: 0;
 }
 

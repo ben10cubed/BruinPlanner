@@ -91,46 +91,81 @@
   width: 100%;
   padding: 10px;
   cursor: pointer;
-  background-color: #2d3748;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: var(--color-primary, #2774AE);
+  border: 1.5px dashed var(--color-primary, #2774AE);
   border-radius: 6px;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 0.9rem;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
-.add-filter-btn:hover {
-  background-color: #1a202c;
+.add-filter-btn:hover:not(:disabled) {
+  background-color: #eef4fb;
+}
+
+.add-filter-btn:disabled {
+  color: #aaa;
+  border-color: #ccc;
+  cursor: not-allowed;
 }
 
 .settings-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1.1rem;
+  gap: 10px;
+  font-size: 1rem;
   font-weight: 500;
   color: #333;
   cursor: pointer;
   white-space: nowrap;
+  user-select: none;
 }
 
+/* Hide native checkbox, replace with toggle */
 .settings-row input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: #ccc;
+  border-radius: 11px;
   cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.settings-row input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.settings-row input[type="checkbox"]:checked {
+  background: var(--color-primary, #2774AE);
+}
+
+.settings-row input[type="checkbox"]:checked::after {
+  transform: translateX(18px);
 }
 
 .global-settings-box {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-direction: column;
+  gap: 14px;
   padding: 5px 0;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 hr {
   border: none;
-  border-top: 3px solid #e0e0e0;
-  margin-bottom: 25px;
+  border-top: 1px solid #e0e0e0;
+  margin-bottom: 20px;
 }

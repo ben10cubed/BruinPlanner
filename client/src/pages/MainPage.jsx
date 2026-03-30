@@ -423,9 +423,7 @@ export default function MainPage({ userID, onLogout }) {
             handleSave={handleSave}
             onOpenFilters={() => setShowFiltersModal(true)}
             filters={filters}
-            setFilters={setFilters}
             settings={settings}
-            setSettings={setSettings}
             handleForceRefresh={handleForceRefresh}
            />
         </div>
