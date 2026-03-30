@@ -207,6 +207,38 @@ h2, h3, h4 {
   border-radius: var(--radius-md);
   padding: 30px;
   position: relative;
+  overflow: visible;
+  z-index: 10;
+}
+
+@keyframes search-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.search-loading::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.search-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(99, 102, 241, 0.15) 50%,
+    transparent 100%
+  );
+  animation: search-shimmer 1.2s ease-in-out infinite;
+  pointer-events: none;
+  clip-path: inset(0 round var(--radius-md));
 }
 
 .search-results::-webkit-scrollbar {
@@ -455,7 +487,9 @@ h2, h3, h4 {
 
 /* ── Header actions ─────────────────────────────────────────── */
 .header-actions {
-  text-align: left;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 .header-actions button {
   margin-right: 12px;

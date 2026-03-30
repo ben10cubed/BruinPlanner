@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 
 export default function SubjectSearch({
   subjectQuery,
@@ -9,16 +9,28 @@ export default function SubjectSearch({
   setSubjectFocused,
   isSelecting,
   setIsSelecting,
+  isLoading,
 }) {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isLoading) {
+      inputRef.current?.blur();
+      setSubjectFocused(false);
+    }
+  }, [isLoading]);
+
   return (
-    <div className="search-box-panel">
+    <div className={`search-box-panel${isLoading ? " search-loading" : ""}`}>
       <h3>Subject Search</h3>
 
       <label>Subject ID</label>
       <input
+        ref={inputRef}
         className="subject-input"
         value={subjectQuery}
-        placeholder="e.g. COM SCI, MATH"
+        placeholder={isLoading ? "Loading..." : "e.g. COM SCI, MATH"}
+        disabled={isLoading}
         onFocus={() => setSubjectFocused(true)}
         onBlur={() => setSubjectFocused(false)}
         onChange={(e) => {

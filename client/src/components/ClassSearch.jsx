@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 
 export default function ClassSearch({
   classQuery,
@@ -7,15 +7,27 @@ export default function ClassSearch({
   handleAddClass,
   classFocused,
   setClassFocused,
+  isLoading,
 }) {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isLoading) {
+      inputRef.current?.blur();
+      setClassFocused(false);
+    }
+  }, [isLoading]);
+
   return (
-    <div className="search-box-panel">
+    <div className={`search-box-panel${isLoading ? " search-loading" : ""}`}>
       <h3>Class Search</h3>
 
       <label>Class ID</label>
       <input
+        ref={inputRef}
         value={classQuery}
-        placeholder="e.g. 31, 151B, 003, 132"
+        placeholder={isLoading ? "Loading..." : "e.g. 31, 151B, 132"}
+        disabled={isLoading}
         onFocus={() => setClassFocused(true)}
         onBlur={() => setClassFocused(false)}
         onChange={(e) => {

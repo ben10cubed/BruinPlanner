@@ -38,6 +38,7 @@ export default function MainPage({ userID, onLogout }) {
     const [showFiltersModal, setShowFiltersModal] = useState(false);
     const [filters, setFilters] = useState([{ id: "none", value: "" }]);
     const [settings, setSettings] = useState({showWaitlist: false, showClosed: false});
+    const [isScraping, setIsScraping] = useState(false);
 
   /* -------------------------------------------
      Schedules (generated via backend)
@@ -127,6 +128,7 @@ export default function MainPage({ userID, onLogout }) {
   ------------------------------------------- */
   async function handleSubjectSelect(subj) {
     setIsSelecting(true);
+    setIsScraping(true);
     setSelectedSubject(subj);
     setSubjectQuery(subj.subjectName);
     setSubjectResults([]);
@@ -144,10 +146,12 @@ export default function MainPage({ userID, onLogout }) {
       );
       setClassQuery("");
       setClassResults([]);
+      setClassFocused(false);
     } catch (err) {
       console.error("Class fetch failed:", err);
     } finally {
       setIsSelecting(false);
+      setIsScraping(false);
     }
   }
 
@@ -208,7 +212,9 @@ export default function MainPage({ userID, onLogout }) {
       return;
     }
 
+    setIsScraping(true);
     const result = await generate(chosenClasses, filters, settings, false);
+    setIsScraping(false);
 
     if (result.error) {
       alert("Error generating schedules: " + result.error);
@@ -224,7 +230,9 @@ export default function MainPage({ userID, onLogout }) {
       return;
     }
 
+    setIsScraping(true);
     const result = await generate(chosenClasses, filters, settings, true);
+    setIsScraping(false);
 
     if (result.error) {
       alert("Error refreshing schedules: " + result.error);
@@ -382,6 +390,7 @@ export default function MainPage({ userID, onLogout }) {
           setSubjectFocused={setSubjectFocused}
           isSelecting={isSelecting}
           setIsSelecting={setIsSelecting}
+          isLoading={isScraping}
         />
         <ClassSearch
           classQuery={classQuery}
@@ -390,6 +399,7 @@ export default function MainPage({ userID, onLogout }) {
           handleAddClass={handleAddClass}
           classFocused={classFocused}
           setClassFocused={setClassFocused}
+          isLoading={isScraping}
         />
       </div>
 
