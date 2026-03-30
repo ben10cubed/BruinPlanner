@@ -60,6 +60,13 @@ export async function initDB() {
     )
   `);
 
+  // Add scraped_at column if it doesn't exist yet (safe to run on existing DBs)
+  try {
+    await client.execute(`ALTER TABLE sectionData ADD COLUMN scraped_at TEXT`);
+  } catch (_) {
+    // Column already exists — ignore
+  }
+
   console.log("[DB] Connected to Turso and ensured tables exist.");
   return client;
 }

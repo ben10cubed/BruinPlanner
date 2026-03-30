@@ -13,7 +13,8 @@ export default function ChosenClasses({
   filters,
   setFilters,
   settings,
-  setSettings
+  setSettings,
+  handleForceRefresh,
 }) {
   
   const removeFilter = (indexToRemove) => {
@@ -45,6 +46,9 @@ export default function ChosenClasses({
           </button>
           <button className="generate-btn" onClick={handleGenerate}>
             Generate
+          </button>
+          <button className="generate-btn" onClick={handleForceRefresh} title="Re-scrape UCLA data (limit: once/min)">
+            Refresh
           </button>
           <button className="save-btn" onClick={handleSave}>
             Save

@@ -460,30 +460,31 @@ export async function getSectionInfo(subjectID, classID, term, className="") {
   const courseData = await fetchCourse(subjectID, classID, term);
   const allClassData = getClassData(courseData, subjectID, tmp_fiat_ID);
 
-  let discussionData = [];
-  for (let i = 1; i <= allClassData.length; i++) {
-    if (subjectID === "FIAT LX" && classID === "19") {
-        //Name has to match the new fiatlx
-        if (allClassData[i-1][2].toLowerCase().includes(className.toLowerCase()) == false) {
-            continue;
-        }
-        discussionData.push(allClassData[i-1]);
-    }
-
-    //Most common working fetching seqNum input
+  async function fetchDiscussionsForLecture(i) {
     let disHTML = await fetchCourse(subjectID, classID, term, i, "1");
     let classDiscussionData = getClassData(disHTML, subjectID, tmp_fiat_ID, i);
 
-    if (classDiscussionData.length == 0) {
-        //Try to fetch with different seqNum
-        disHTML = await fetchCourse(subjectID, classID, term, i, null);
-        classDiscussionData = getClassData(disHTML, subjectID, tmp_fiat_ID, i);
+    if (classDiscussionData.length === 0) {
+      disHTML = await fetchCourse(subjectID, classID, term, i, null);
+      classDiscussionData = getClassData(disHTML, subjectID, tmp_fiat_ID, i);
     }
 
-    if (classDiscussionData.length > 0) {
-        discussionData.push(...classDiscussionData);
-    }
+    return classDiscussionData;
   }
+
+  const lectureIndices = [];
+  const fiatLxBaseEntries = [];
+  for (let i = 1; i <= allClassData.length; i++) {
+    if (subjectID === "FIAT LX" && classID === "19") {
+      if (allClassData[i-1][2].toLowerCase().includes(className.toLowerCase())) {
+        fiatLxBaseEntries.push(allClassData[i-1]);
+      }
+    }
+    lectureIndices.push(i);
+  }
+
+  const discussionResults = await Promise.all(lectureIndices.map(i => fetchDiscussionsForLecture(i)));
+  const discussionData = [...fiatLxBaseEntries, ...discussionResults.flat()];
 
   if (subjectID === "FIAT LX" && classID.includes("19")) {
     return discussionData

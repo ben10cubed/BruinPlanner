@@ -208,14 +208,29 @@ export default function MainPage({ userID, onLogout }) {
       return;
     }
 
-    const result = await generate(chosenClasses, filters, settings);
+    const result = await generate(chosenClasses, filters, settings, false);
 
     if (result.error) {
       alert("Error generating schedules: " + result.error);
       return;
     }
 
-    // New generated schedules → not associated with a saved schedule
+    setActiveIndex(null);
+  }
+
+  async function handleForceRefresh() {
+    if (chosenClasses.length === 0) {
+      alert("Please add at least one class before refreshing.");
+      return;
+    }
+
+    const result = await generate(chosenClasses, filters, settings, true);
+
+    if (result.error) {
+      alert("Error refreshing schedules: " + result.error);
+      return;
+    }
+
     setActiveIndex(null);
   }
 
@@ -401,6 +416,7 @@ export default function MainPage({ userID, onLogout }) {
             setFilters={setFilters}
             settings={settings}
             setSettings={setSettings}
+            handleForceRefresh={handleForceRefresh}
            />
         </div>
 

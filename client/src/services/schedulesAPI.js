@@ -1,4 +1,4 @@
-export async function generateSchedules(chosenClasses, filters = [], settings = { showWaitlist: false, showClosed: false }) {
+export async function generateSchedules(chosenClasses, filters = [], settings = { showWaitlist: false, showClosed: false }, forceRefresh = false) {
   const payload = {
     classes: chosenClasses.map(c => ({
       subjectID: c.subjectID,
@@ -6,6 +6,7 @@ export async function generateSchedules(chosenClasses, filters = [], settings = 
     })),
     filters,
     settings,
+    forceRefresh,
   };
 
   const res = await fetch("/api/schedules", {
