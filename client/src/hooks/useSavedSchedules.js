@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { loadSchedules, saveSchedule, deleteSchedule } from "../services/usersAPI";
 
 export default function useSavedSchedules(userID) {
@@ -6,26 +6,26 @@ export default function useSavedSchedules(userID) {
   const [activeIndex, setActiveIndex] = useState(null);
 
   // Load saved schedules from backend
-  async function reload() {
+  const reload = useCallback(async () => {
     const res = await loadSchedules(userID);
     if (res.success) {
       setSaved(res.schedules);
     }
-  }
+  }, [userID]);
 
   // Save a schedule (overwrite = true deletes first)
-  async function save(name, schedule, overwrite = false) {
+  const save = useCallback(async (name, schedule, overwrite = false) => {
     if (overwrite) {
       await deleteSchedule(userID, name);
     }
     return await saveSchedule(userID, name, schedule);
-  }
+  }, [userID]);
 
   // Delete saved schedule
-  async function remove(name) {
+  const remove = useCallback(async (name) => {
     await deleteSchedule(userID, name);
     await reload();
-  }
+  }, [userID, reload]);
 
   return {
     saved,

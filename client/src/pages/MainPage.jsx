@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import Timetable from "../components/Timetable.jsx";
 import ClassDetails from "../components/ClassDetails.jsx";
@@ -31,6 +31,8 @@ export default function MainPage({ userID, onLogout }) {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [chosenClasses, setChosenClasses] = useState([]);
+  const [searchError, setSearchError] = useState("");
+  const [plannerNotice, setPlannerNotice] = useState(null);
 
   /* -------------------------------------------
       Schedule filters / priorities
@@ -82,26 +84,31 @@ export default function MainPage({ userID, onLogout }) {
   ------------------------------------------- */
   useEffect(() => {
     reloadSaved();
-  }, [userID]);
+  }, [reloadSaved]);
 
 
   /* -------------------------------------------
      Load subjects once
   ------------------------------------------- */
-  useEffect(() => {
-    async function loadSubjects() {
-      try {
-        const res = await fetch("/api/subjects");
-        if (!res.ok) return;
-        const data = await res.json();
-        setAllSubjects(data);
-        setSubjectResults(data);
-      } catch (err) {
-        console.error("Subject fetch error:", err);
+  const loadSubjects = useCallback(async () => {
+    try {
+      const res = await fetch("/api/subjects");
+      if (!res.ok) {
+        throw new Error("Course data is temporarily unavailable.");
       }
+      const data = await res.json();
+      setAllSubjects(data);
+      setSubjectResults(data);
+      setSearchError("");
+    } catch (err) {
+      console.error("Subject fetch error:", err);
+      setSearchError("Course data is temporarily unavailable. Please try again shortly.");
     }
-    loadSubjects();
   }, []);
+
+  useEffect(() => {
+    loadSubjects();
+  }, [loadSubjects]);
 
 
   /* -------------------------------------------
@@ -132,10 +139,13 @@ export default function MainPage({ userID, onLogout }) {
     setSelectedSubject(subj);
     setSubjectQuery(subj.subjectName);
     setSubjectResults([]);
+    setSearchError("");
 
     try {
       const res = await fetch(`/api/classes?subject=${subj.subjectID}`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        throw new Error("Classes could not be loaded for this subject.");
+      }
       const data = await res.json();
 
       setAllClasses(
@@ -149,6 +159,7 @@ export default function MainPage({ userID, onLogout }) {
       setClassFocused(false);
     } catch (err) {
       console.error("Class fetch failed:", err);
+      setSearchError("Classes could not be loaded. Select the subject again to retry.");
     } finally {
       setIsSelecting(false);
       setIsScraping(false);
@@ -208,38 +219,42 @@ export default function MainPage({ userID, onLogout }) {
   ------------------------------------------- */
   async function handleGenerate() {
     if (chosenClasses.length === 0) {
-      alert("Please add at least one class before generating.");
+      setPlannerNotice({ type: "error", message: "Add at least one class before generating a schedule." });
       return;
     }
 
+    setPlannerNotice(null);
     setIsScraping(true);
     const result = await generate(chosenClasses, filters, settings, false);
     setIsScraping(false);
 
     if (result.error) {
-      alert("Error generating schedules: " + result.error);
+      setPlannerNotice({ type: "error", message: `Unable to generate schedules: ${result.error}` });
       return;
     }
 
     setActiveIndex(null);
+    setPlannerNotice({ type: "success", message: "Schedules generated. Use Previous and Next to compare them." });
   }
 
   async function handleForceRefresh() {
     if (chosenClasses.length === 0) {
-      alert("Please add at least one class before refreshing.");
+      setPlannerNotice({ type: "error", message: "Add at least one class before refreshing course data." });
       return;
     }
 
+    setPlannerNotice(null);
     setIsScraping(true);
     const result = await generate(chosenClasses, filters, settings, true);
     setIsScraping(false);
 
     if (result.error) {
-      alert("Error refreshing schedules: " + result.error);
+      setPlannerNotice({ type: "error", message: `Unable to refresh schedules: ${result.error}` });
       return;
     }
 
     setActiveIndex(null);
+    setPlannerNotice({ type: "success", message: "Course data refreshed and schedules regenerated." });
   }
 
 
@@ -300,7 +315,7 @@ export default function MainPage({ userID, onLogout }) {
 
     await removeSaved(name);
 
-    alert(`Schedule "${name}" deleted successfully.`);
+    setPlannerNotice({ type: "success", message: `Schedule "${name}" was deleted.` });
   }
 
 
@@ -309,7 +324,7 @@ export default function MainPage({ userID, onLogout }) {
   ------------------------------------------- */
   function handleSave() {
     if (schedules.length === 0) {
-      alert("No schedule to save. Generate or load a schedule first.");
+      setPlannerNotice({ type: "error", message: "Generate or load a schedule before saving." });
       return;
     }
 
@@ -325,7 +340,7 @@ export default function MainPage({ userID, onLogout }) {
   ------------------------------------------- */
   async function handleSaveConfirm() {
     if (schedules.length === 0) {
-      alert("No schedule to save.");
+      setPlannerNotice({ type: "error", message: "There is no schedule to save." });
       return;
     }
 
@@ -334,13 +349,13 @@ export default function MainPage({ userID, onLogout }) {
 
     if (saveMode === "new") {
       if (!saveName.trim()) {
-        alert("Please enter a name for the new schedule.");
+        setPlannerNotice({ type: "error", message: "Enter a name for the new schedule." });
         return;
       }
       nameToUse = saveName.trim();
     } else {
       if (!saveExistingName) {
-        alert("Please select an existing schedule to overwrite.");
+        setPlannerNotice({ type: "error", message: "Select a saved schedule to overwrite." });
         return;
       }
       nameToUse = saveExistingName;
@@ -352,17 +367,17 @@ export default function MainPage({ userID, onLogout }) {
 
     if (!res.success) {
       if (res.nameConflict) {
-        alert("A schedule with that name already exists.");
+        setPlannerNotice({ type: "error", message: "A schedule with that name already exists." });
       } else {
-        alert("Save failed.");
+        setPlannerNotice({ type: "error", message: "Schedule save failed. Please try again." });
       }
       return;
     }
 
     if (res.duplicate) {
-      alert("This exact schedule was already saved.");
+      setPlannerNotice({ type: "info", message: "This exact schedule is already saved." });
     } else {
-      alert("Schedule saved!");
+      setPlannerNotice({ type: "success", message: "Schedule saved." });
     }
 
     setShowSaveModal(false);
@@ -402,6 +417,22 @@ export default function MainPage({ userID, onLogout }) {
           isLoading={isScraping}
         />
       </div>
+      {searchError && (
+        <div className="search-status" role="alert">
+          <span>{searchError}</span>
+          <button type="button" onClick={loadSubjects}>
+            Retry
+          </button>
+        </div>
+      )}
+      {plannerNotice && (
+        <div className={`planner-status ${plannerNotice.type}`} role={plannerNotice.type === "error" ? "alert" : "status"}>
+          <span>{plannerNotice.message}</span>
+          <button type="button" onClick={() => setPlannerNotice(null)} aria-label="Dismiss message">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="bottom-row">
         <div className="timetable-area">
@@ -422,9 +453,10 @@ export default function MainPage({ userID, onLogout }) {
             handleClear={handleClear}
             handleSave={handleSave}
             onOpenFilters={() => setShowFiltersModal(true)}
-            filters={filters}
-            settings={settings}
             handleForceRefresh={handleForceRefresh}
+            classCount={chosenClasses.length}
+            scheduleCount={schedules.length}
+            isBusy={isScraping}
            />
         </div>
 

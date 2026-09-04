@@ -17,9 +17,14 @@ export default function SavedSchedulesSidebar({
             idx === activeIndex ? "active" : ""
           }`}
         >
-          <span className="schedule-name" onClick={() => onLoad(idx)}>
+          <button
+            type="button"
+            className="schedule-name"
+            onClick={() => onLoad(idx)}
+            aria-current={idx === activeIndex ? "true" : undefined}
+          >
             {item.name}
-          </span>
+          </button>
 
           <button className="delete-btn" onClick={() => onDelete(item.name)}>
             Delete

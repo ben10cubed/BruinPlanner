@@ -173,13 +173,7 @@ function hasOverlap(time1, time2) {
     const [start1, end1] = time1;
     const [start2, end2] = time2;
 
-    if(start2 <= end1 && start2 >= start1) {
-        return true;
-    }
-    if(start1 <= end2 && start1 >= start2) {
-        return true;
-    }
-    return false;
+    return start1 < end2 && start2 < end1;
 }
 
 function isNotScheduled(str) {
@@ -233,12 +227,97 @@ async function hasConflicts(db, sched) {
     return false;
 }
 
-function cutSectionID(str) {
-    let index = 0;
-    while(str[index] != " ") {
-        index++;
+function timeToMinutes(time) {
+    const hours = Math.floor(time / 100);
+    const minutes = time % 100;
+    return hours * 60 + minutes;
+}
+
+async function getScheduleMetrics(db, schedule) {
+    const meetingsByDay = Array.from({ length: 7 }, () => []);
+
+    for (const [courseID, sectionList] of Object.entries(schedule)) {
+        const [subjectID, classID] = parseCourseID(courseID);
+        for (const sectionID of sectionList) {
+            const daysStr = await getSectionDay(db, subjectID, classID, sectionID);
+            const timesStr = await getSectionTime(db, subjectID, classID, sectionID);
+
+            if (isNotScheduled(daysStr) || isNotScheduled(timesStr)) {
+                continue;
+            }
+
+            const days = getDays(daysStr);
+            const times = getTimes(timesStr);
+            for (let index = 0; index < days.length; index++) {
+                const day = strToDay[days[index]];
+                const time = times[index];
+                if (day === undefined || !time) {
+                    continue;
+                }
+
+                meetingsByDay[day].push({
+                    start: timeToMinutes(time[0]),
+                    end: timeToMinutes(time[1]),
+                });
+            }
+        }
     }
-    return str.substring(index+1);
+
+    let scheduledDays = 0;
+    let idleMinutes = 0;
+
+    for (const meetings of meetingsByDay) {
+        if (meetings.length === 0) {
+            continue;
+        }
+
+        scheduledDays++;
+        meetings.sort((left, right) => left.start - right.start);
+        const earliestStart = meetings[0].start;
+        const latestEnd = Math.max(...meetings.map((meeting) => meeting.end));
+        const instructionalMinutes = meetings.reduce(
+            (total, meeting) => total + (meeting.end - meeting.start),
+            0,
+        );
+        idleMinutes += Math.max(0, latestEnd - earliestStart - instructionalMinutes);
+    }
+
+    return { idleMinutes, scheduledDays };
+}
+
+async function rankSchedules(db, schedules, filters) {
+    const rankingFilters = filters.filter(
+        (filter) => filter.id === "compact" || filter.id === "min_days",
+    );
+    if (rankingFilters.length === 0) {
+        return schedules;
+    }
+
+    const rankedSchedules = await Promise.all(
+        schedules.map(async (schedule, index) => ({
+            schedule,
+            index,
+            metrics: await getScheduleMetrics(db, schedule),
+        })),
+    );
+
+    rankedSchedules.sort((left, right) => {
+        for (const filter of rankingFilters) {
+            const metric = filter.id === "compact" ? "idleMinutes" : "scheduledDays";
+            const difference = left.metrics[metric] - right.metrics[metric];
+            if (difference !== 0) {
+                return difference;
+            }
+        }
+        return left.index - right.index;
+    });
+
+    return rankedSchedules.map(({ schedule }) => schedule);
+}
+
+function cutSectionID(str) {
+    const separatorIndex = str.indexOf(" ");
+    return separatorIndex === -1 ? str : str.substring(separatorIndex + 1);
 }
 
 function isLecture(sectionID) {
@@ -318,5 +397,5 @@ export async function getSchedules(db, courses, term="26W", filters=[], settings
             console.log("Conflict detected, skipping schedule");
         }
     }
-    return validSchedules;
+    return rankSchedules(db, validSchedules, filters);
 }

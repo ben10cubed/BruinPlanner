@@ -39,7 +39,7 @@ export default function SignupPage({ onSignup, onLoginPage }) {
         const data = await res.json();
         setError(data.error);
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred. Please try again.");
     }
   };

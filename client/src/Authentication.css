@@ -12,7 +12,7 @@
 
 .login-card {
   max-width: 28rem;
-  width: 100%;
+  width: calc(100% - 2rem);
   background-color: white;
   border-radius: 0.75rem;
   box-shadow: 0 10px 15px -3px;

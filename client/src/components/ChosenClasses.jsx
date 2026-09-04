@@ -9,10 +9,14 @@ export default function ChosenClasses({
   handleClear,
   handleSave,
   onOpenFilters,
-  filters,
-  settings,
   handleForceRefresh,
+  classCount,
+  scheduleCount,
+  isBusy,
 }) {
+  const hasClasses = classCount > 0;
+  const hasSchedules = scheduleCount > 0;
+
   return (
     <div className="chosen-classes-panel">
 
@@ -20,23 +24,23 @@ export default function ChosenClasses({
         <h3>Chosen Classes</h3>
       </div>
       <div className="header-actions">
-          <button className="preferences-btn" onClick={onOpenFilters}>
+          <button className="preferences-btn" onClick={onOpenFilters} title="Set schedule preferences" disabled={isBusy}>
             Filters
           </button>
-          <button className="generate-btn" onClick={handleGenerate}>
-            Generate
+          <button className="generate-btn primary-action" onClick={handleGenerate} disabled={!hasClasses || isBusy}>
+            {isBusy ? "Generating..." : "Generate"}
           </button>
-          <button className="generate-btn" onClick={handleForceRefresh} title="Re-scrape UCLA data (limit: once/min)">
+          <button className="refresh-btn" onClick={handleForceRefresh} title="Re-scrape UCLA data (limit: once/min)" disabled={!hasClasses || isBusy}>
             Refresh
           </button>
-          <button className="save-btn" onClick={handleSave}>
+          <button className="save-btn" onClick={handleSave} disabled={!hasSchedules || isBusy}>
             Save
           </button>
         </div>
 
       <div className="chosen-list">
         {chosenClasses.length === 0 && (
-          <div className="empty-msg">No classes chosen.</div>
+          <div className="empty-msg">Choose a subject and class above to start building a schedule.</div>
         )}
 
         {chosenClasses.map((c) => (
@@ -53,9 +57,9 @@ export default function ChosenClasses({
       </div>
 
       <div className="chosen-fixed-footer">
-        <button onClick={handlePrev}>Previous</button>
-        <button className="clear-btn" onClick={handleClear}>Clear</button>
-        <button onClick={handleNext}>Next</button>
+        <button onClick={handlePrev} disabled={!hasSchedules || isBusy}>Previous</button>
+        <button className="clear-btn" onClick={handleClear} disabled={!hasClasses || isBusy}>Clear</button>
+        <button onClick={handleNext} disabled={!hasSchedules || isBusy}>Next</button>
       </div>
 
     </div>
